@@ -406,6 +406,27 @@ ls -la ~/clawd  # 커스텀 경로</code></pre>
         <p>파일을 찾았으면 Config의 workspace 경로를 해당 위치로 수정</p>
       </div>
 
+      <h2>[FIX] 긴급 복구 (치트키)</h2>
+
+      <div class="alert alert-danger">
+        <div class="alert-title">[!!] 먹통됐을 때 해결법</div>
+        <p>Config 수정하다가 오타나거나 설정이 꼬여서 <strong>OpenClaw가 아예 안 켜질 때</strong> 사용하세요.</p>
+      </div>
+
+      <div class="code-header">
+        <span>Terminal (자동 복구 명령어)</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>openclaw doctor --fix</code></pre>
+
+      <p>이 명령어는 다음 작업을 수행합니다:</p>
+      <ul>
+        <li>Config JSON 문법 오류 자동 수정</li>
+        <li>누락된 필수 필드 복구</li>
+        <li>권한 문제 해결</li>
+        <li>손상된 설정 초기화 (필요시)</li>
+      </ul>
+
       <h2>[FIX] 일반적인 해결 순서</h2>
       
       <p>문제가 발생하면 이 순서로 시도:</p>
