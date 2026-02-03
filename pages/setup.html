@@ -24,6 +24,7 @@
         <div class="sidebar-section">실전</div>
         <ul class="sidebar-nav">
           <li><a href="examples.html">활용 예시</a></li>
+          <li><a href="auto-setup.html">자동 설정 템플릿</a></li>
           <li><a href="troubleshooting.html">트러블슈팅</a></li>
         </ul>
       </nav>
@@ -48,8 +49,8 @@
         </thead>
         <tbody>
           <tr>
-            <td>Mac Mini (또는 macOS)</td>
-            <td>macOS 12.0+, 16GB+ RAM 권장</td>
+            <td>컴퓨터</td>
+            <td>macOS 12.0+ / Windows 10+ / Linux, 16GB+ RAM 권장</td>
             <td>[ ]</td>
           </tr>
           <tr>
@@ -73,6 +74,8 @@
       <h2>[1] Node.js 설치</h2>
       
       <p>OpenClaw는 Node.js 22 이상이 필요합니다.</p>
+
+      <h3>macOS</h3>
       
       <div class="code-header">
         <span>Terminal</span>
@@ -89,19 +92,81 @@ brew install node
 nvm install 22
 nvm use 22</code></pre>
 
+      <h3>Windows</h3>
+      
+      <div class="alert alert-warning">
+        <div class="alert-title">[!] PowerShell 실행 정책 설정 필수</div>
+        <p>Windows는 기본적으로 스크립트 실행이 막혀있습니다. Node.js/npm 사용 전에 먼저 설정해야 합니다.</p>
+      </div>
+
+      <div class="code-header">
+        <span>PowerShell (관리자 권한)</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># 1. PowerShell을 "관리자 권한으로 실행"
+# 2. 실행 정책 변경
+Set-ExecutionPolicy RemoteSigned
+
+# 확인 메시지가 나오면 Y 입력
+
+# 현재 정책 확인
+Get-ExecutionPolicy
+# RemoteSigned 출력되면 성공</code></pre>
+
+      <table>
+        <thead>
+          <tr>
+            <th>정책</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Restricted</code></td>
+            <td>스크립트 실행 금지 (Windows 기본값)</td>
+          </tr>
+          <tr>
+            <td><code>RemoteSigned</code></td>
+            <td>로컬 스크립트 OK, 인터넷 스크립트는 서명 필요 (권장)</td>
+          </tr>
+          <tr>
+            <td><code>Unrestricted</code></td>
+            <td>모두 허용 (경고만 표시)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>그 다음 Node.js 설치:</p>
+
+      <div class="code-header">
+        <span>PowerShell</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># 공식 설치 프로그램 (권장)
+# https://nodejs.org 에서 LTS 다운로드 후 설치
+
+# 또는 winget으로 설치
+winget install OpenJS.NodeJS.LTS
+
+# 또는 Chocolatey로 설치
+choco install nodejs-lts
+
+# 설치 확인
+node --version</code></pre>
+
       <h2>[2] OpenClaw 설치</h2>
       
       <div class="steps">
         <div class="step">
-          <h4>npm으로 전역 설치</h4>
+          <h4>npm으로 전역 설치 (모든 OS)</h4>
           <div class="code-header">
-            <span>Terminal</span>
+            <span>Terminal / PowerShell</span>
             <button class="copy-btn" onclick="copyCode(this)">복사</button>
           </div>
           <pre><code>npm install -g openclaw</code></pre>
-          <p>또는 공식 설치 스크립트:</p>
+          <p>macOS/Linux 전용 - 공식 설치 스크립트:</p>
           <div class="code-header">
-            <span>Terminal</span>
+            <span>Terminal (macOS/Linux)</span>
             <button class="copy-btn" onclick="copyCode(this)">복사</button>
           </div>
           <pre><code>curl -fsSL https://openclaw.bot/install.sh | bash
