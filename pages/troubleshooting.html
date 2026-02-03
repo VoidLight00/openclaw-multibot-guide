@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>트러블슈팅 - OpenClaw 멀티봇 가이드</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="../index.html" class="sidebar-logo">[CLAW] OpenClaw <span>Guide</span></a>
+      <nav>
+        <ul class="sidebar-nav"><li><a href="../index.html">시작하기</a></li></ul>
+        <div class="sidebar-section">가이드</div>
+        <ul class="sidebar-nav">
+          <li><a href="intro.html">1. 개요</a></li>
+          <li><a href="setup.html">2. 사전 준비</a></li>
+          <li><a href="models.html">3. AI 모델 설정</a></li>
+          <li><a href="workspace.html">4. Workspace 구조</a></li>
+          <li><a href="config.html">5. Config 설정</a></li>
+          <li><a href="run.html">6. 실행 & 테스트</a></li>
+        </ul>
+        <div class="sidebar-section">실전</div>
+        <ul class="sidebar-nav">
+          <li><a href="examples.html">활용 예시</a></li>
+          <li><a href="troubleshooting.html" class="active">트러블슈팅</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <h1>트러블슈팅</h1>
+      <p class="lead">
+        자주 발생하는 문제와 해결 방법을 정리했습니다.
+        실제 설정 과정에서 겪은 문제들을 기반으로 작성되었습니다.
+      </p>
+
+      <h2>[SEARCH] 진단 명령어</h2>
+      
+      <p>문제 해결 전 먼저 실행해보세요:</p>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># 전체 상태 확인
+openclaw status
+
+# 헬스 체크 및 자동 수정
+openclaw doctor
+
+# 최근 로그 확인
+openclaw logs --tail 100
+
+# config 검증
+cat ~/.openclaw/openclaw.json | python3 -m json.tool
+
+# 사용 가능한 명령어 확인
+openclaw --help</code></pre>
+
+      <h2>[X] CLI 명령어 에러</h2>
+
+      <h3>"unknown command 'auth'" 에러</h3>
+      
+      <div class="card">
+        <h4>증상</h4>
+        <pre><code>$ openclaw auth add google
+error: unknown command 'auth' (Did you mean health?)</code></pre>
+        
+        <h4>원인</h4>
+        <p><code>auth</code> 명령어는 존재하지 않음. 버전/문서 차이.</p>
+        
+        <h4>해결</h4>
+        <p>대신 <code>configure</code> 또는 <code>setup</code> 사용:</p>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code># 대화형 설정 마법사 (OAuth 포함)
+openclaw configure
+
+# 또는
+openclaw setup</code></pre>
+        <p>이 명령어가 브라우저를 열어 OAuth 인증을 진행합니다.</p>
+      </div>
+
+      <h3>명령어를 모를 때</h3>
+      
+      <div class="card">
+        <h4>사용 가능한 명령어 확인</h4>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code>openclaw --help</code></pre>
+        
+        <h4>주요 명령어 목록</h4>
+        <table>
+          <tr><td><code>setup</code></td><td>초기 설정 마법사</td></tr>
+          <tr><td><code>configure</code></td><td>인증/설정 마법사</td></tr>
+          <tr><td><code>config</code></td><td>config 값 get/set</td></tr>
+          <tr><td><code>doctor</code></td><td>헬스체크 및 자동 수정</td></tr>
+          <tr><td><code>dashboard</code></td><td>웹 UI 열기</td></tr>
+          <tr><td><code>gateway</code></td><td>Gateway 제어</td></tr>
+          <tr><td><code>status</code></td><td>상태 확인</td></tr>
+        </table>
+      </div>
+
+      <h2>[X] Config 에러</h2>
+
+      <h3>"Unrecognized keys" 에러</h3>
+      
+      <div class="card">
+        <h4>증상</h4>
+        <pre><code>Error: Unrecognized keys: belphegor, mammon, asmodeus</code></pre>
+        
+        <h4>원인</h4>
+        <p><code>agents</code>를 객체로 정의함. 배열이어야 함!</p>
+        
+        <h4>해결</h4>
+        <div class="code-header">
+          <span>[X] 잘못된 형식</span>
+        </div>
+        <pre><code>{
+  "agents": {
+    "belphegor": { ... },
+    "mammon": { ... }
+  }
+}</code></pre>
+        <div class="code-header">
+          <span>[OK] 올바른 형식</span>
+        </div>
+        <pre><code>{
+  "agents": {
+    "list": [
+      { "id": "belphegor", ... },
+      { "id": "mammon", ... }
+    ]
+  }
+}</code></pre>
+      </div>
+
+      <h3>JSON 문법 에러</h3>
+      
+      <div class="card">
+        <h4>증상</h4>
+        <pre><code>SyntaxError: Unexpected token</code></pre>
+        
+        <h4>해결</h4>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code># JSON 문법 검사
+cat ~/.openclaw/openclaw.json | python3 -m json.tool</code></pre>
+        <p>흔한 실수:</p>
+        <ul>
+          <li>마지막 항목 뒤에 쉼표 <code>,</code></li>
+          <li>따옴표 누락</li>
+          <li>중괄호/대괄호 불일치</li>
+        </ul>
+      </div>
+
+      <h3>웹 UI에서 "Form view can't safely edit" 경고</h3>
+      
+      <div class="card">
+        <h4>증상</h4>
+        <pre><code>Form view can't safely edit some fields. Use Raw to avoid losing config entries.</code></pre>
+        
+        <h4>해결</h4>
+        <p>Form 모드 대신 Raw 모드 사용:</p>
+        <ol>
+          <li>화면 우측 상단 "Raw" 버튼 클릭</li>
+          <li>JSON 직접 편집</li>
+          <li>Save/Apply</li>
+        </ol>
+      </div>
+
+      <h2>[X] OAuth 인증 문제</h2>
+
+      <h3>Dashboard에서 Connect 버튼이 없음</h3>
+      
+      <div class="card">
+        <h4>해결 순서</h4>
+        <ol>
+          <li>먼저 프로필 생성이 필요합니다</li>
+          <li>Auth Profiles → Add Entry</li>
+          <li>이름: <code>google:default</code></li>
+          <li>Provider: Google, Mode: oauth</li>
+          <li>Save 후 Connect 버튼 나타남</li>
+        </ol>
+        
+        <h4>또는 CLI로</h4>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code>openclaw config set auth.profiles.google:default.provider google
+openclaw config set auth.profiles.google:default.mode oauth
+openclaw gateway restart</code></pre>
+      </div>
+
+      <h3>OAuth 콜백 실패</h3>
+      
+      <div class="card">
+        <h4>증상</h4>
+        <p>브라우저에서 승인 후 돌아오지 않거나 에러</p>
+        
+        <h4>해결</h4>
+        <ol>
+          <li>Gateway가 실행 중인지 확인</li>
+          <li>포트 18789가 열려있는지 확인</li>
+          <li>Gateway 재시작 후 다시 시도</li>
+        </ol>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code>openclaw gateway restart
+openclaw dashboard</code></pre>
+      </div>
+
+      <h2>[X] 텔레그램 연결 문제</h2>
+
+      <h3>봇이 응답하지 않음</h3>
+      
+      <div class="card">
+        <h4>체크리스트</h4>
+        <ol>
+          <li>Gateway가 실행 중인가? → <code>openclaw status</code></li>
+          <li>봇 토큰이 정확한가? → config 확인</li>
+          <li>다른 기기에서 같은 토큰 사용 중? → 중지 필요</li>
+          <li>Pairing 승인 필요? → <code>openclaw pairing list</code></li>
+        </ol>
+      </div>
+
+      <h3>409 Conflict 에러</h3>
+      
+      <div class="card">
+        <h4>증상</h4>
+        <pre><code>Telegram error 409: Conflict: terminated by other getUpdates</code></pre>
+        
+        <h4>원인</h4>
+        <p>같은 봇 토큰을 여러 곳에서 동시에 사용 중</p>
+        
+        <h4>해결</h4>
+        <ol>
+          <li>다른 모든 기기에서 OpenClaw 중지</li>
+          <li>30초~1분 대기</li>
+          <li>Gateway 재시작</li>
+        </ol>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code>openclaw gateway restart</code></pre>
+      </div>
+
+      <h2>[X] Gateway 문제</h2>
+
+      <h3>포트 충돌</h3>
+      
+      <div class="card">
+        <h4>증상</h4>
+        <pre><code>EADDRINUSE: address already in use :::18789</code></pre>
+        
+        <h4>해결</h4>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code># 포트 사용 중인 프로세스 확인
+lsof -i :18789
+
+# 강제 종료
+kill -9 [PID]</code></pre>
+      </div>
+
+      <h3>Gateway가 계속 죽음</h3>
+      
+      <div class="card">
+        <h4>진단</h4>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code># doctor로 진단
+openclaw doctor
+
+# 포그라운드에서 실행해서 에러 확인
+openclaw gateway
+
+# 로그 확인
+openclaw logs --tail 200</code></pre>
+      </div>
+
+      <h2>[FIX] 일반적인 해결 순서</h2>
+      
+      <p>문제가 발생하면 이 순서로 시도:</p>
+      
+      <div class="steps">
+        <div class="step">
+          <h4>Doctor 실행</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>openclaw doctor</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>Gateway 재시작</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>openclaw gateway restart</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>버전 업데이트</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>npm update -g openclaw
+openclaw --version</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>Configure 재실행</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>openclaw configure</code></pre>
+        </div>
+      </div>
+
+      <h2>[HELP] 추가 도움</h2>
+      
+      <div class="card-grid">
+        <div class="card">
+          <h4>[DOCS] 공식 문서</h4>
+          <p><a href="https://docs.openclaw.ai" target="_blank">docs.openclaw.ai</a></p>
+        </div>
+        <div class="card">
+          <h4>[CHAT] Discord 커뮤니티</h4>
+          <p><a href="https://discord.com/invite/clawd" target="_blank">discord.com/invite/clawd</a></p>
+        </div>
+        <div class="card">
+          <h4>[BUG] GitHub Issues</h4>
+          <p><a href="https://github.com/openclaw/openclaw/issues" target="_blank">github.com/openclaw/openclaw</a></p>
+        </div>
+      </div>
+
+      <div class="page-nav">
+        <a href="examples.html">
+          <span class="page-nav-label">이전</span>
+          <span class="page-nav-title">← 활용 예시</span>
+        </a>
+        <a href="../index.html" class="page-nav-next">
+          <span class="page-nav-label">처음으로</span>
+          <span class="page-nav-title">시작하기 →</span>
+        </a>
+      </div>
+    </main>
+  </div>
+  <script src="../js/main.js"></script>
+</body>
+</html>

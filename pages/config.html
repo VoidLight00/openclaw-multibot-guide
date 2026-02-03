@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>5. Config 설정 - OpenClaw 멀티봇 가이드</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        [CLAW] OpenClaw <span>Guide</span>
+      </a>
+      
+      <nav>
+        <ul class="sidebar-nav">
+          <li><a href="../index.html">시작하기</a></li>
+        </ul>
+        
+        <div class="sidebar-section">가이드</div>
+        <ul class="sidebar-nav">
+          <li><a href="intro.html">1. 개요</a></li>
+          <li><a href="setup.html">2. 사전 준비</a></li>
+          <li><a href="models.html">3. AI 모델 설정</a></li>
+          <li><a href="workspace.html">4. Workspace 구조</a></li>
+          <li><a href="config.html" class="active">5. Config 설정</a></li>
+          <li><a href="run.html">6. 실행 & 테스트</a></li>
+        </ul>
+        
+        <div class="sidebar-section">실전</div>
+        <ul class="sidebar-nav">
+          <li><a href="examples.html">활용 예시</a></li>
+          <li><a href="troubleshooting.html">트러블슈팅</a></li>
+        </ul>
+        
+        <div class="sidebar-section">참고</div>
+        <ul class="sidebar-nav">
+          <li><a href="https://docs.openclaw.ai" target="_blank">공식 문서 ↗</a></li>
+          <li><a href="https://github.com/openclaw/openclaw" target="_blank">GitHub ↗</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <h1>5. Config 설정</h1>
+      <p class="lead">
+        멀티봇의 핵심! agents, channels, bindings 설정을 완벽히 이해하고 
+        나만의 멀티 에이전트 config를 작성합니다.
+      </p>
+
+      <div class="alert alert-warning">
+        <div class="alert-title">[!] 중요: Config 형식</div>
+        <p>OpenClaw 2026.2.1 이상에서는 <code>agents</code>가 반드시 <code>agents.list[]</code> 배열 형식이어야 합니다. 
+        직접 객체로 정의하면 "Unrecognized keys" 에러가 발생합니다.</p>
+      </div>
+
+      <h2>[DIR] Config 파일 위치</h2>
+      
+      <div class="code-header">
+        <span>config 파일 경로</span>
+      </div>
+      <pre><code>~/.openclaw/openclaw.json</code></pre>
+      
+      <p>Config를 수정하는 방법은 여러 가지입니다:</p>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>방법</th>
+            <th>명령어</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>웹 UI</td>
+            <td><code>openclaw dashboard</code></td>
+            <td>브라우저에서 GUI로 편집 (Raw 모드 권장)</td>
+          </tr>
+          <tr>
+            <td>CLI</td>
+            <td><code>openclaw config set ...</code></td>
+            <td>개별 값 설정</td>
+          </tr>
+          <tr>
+            <td>직접 편집</td>
+            <td><code>vi ~/.openclaw/openclaw.json</code></td>
+            <td>JSON 파일 직접 수정</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>[FIX] 핵심 섹션</h2>
+
+      <h3>1. agents.list[] - 에이전트 정의</h3>
+      
+      <p>각 에이전트의 ID와 workspace를 정의합니다.</p>
+      
+      <div class="code-header">
+        <span>agents 섹션</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>{
+  "agents": {
+    "list": [
+      {
+        "id": "belphegor",
+        "workspace": "/Users/username/clawd"
+      },
+      {
+        "id": "mammon",
+        "workspace": "/Users/username/mammon"
+      },
+      {
+        "id": "asmodeus",
+        "workspace": "/Users/username/asmodeus"
+      }
+    ],
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-5"
+      }
+    }
+  }
+}</code></pre>
+
+      <table>
+        <thead>
+          <tr>
+            <th>필드</th>
+            <th>필수</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>id</code></td>
+            <td>[OK]</td>
+            <td>에이전트 고유 식별자 (bindings에서 참조)</td>
+          </tr>
+          <tr>
+            <td><code>workspace</code></td>
+            <td>[OK]</td>
+            <td>에이전트의 작업 디렉토리 (AGENTS.md, MEMORY.md 등)</td>
+          </tr>
+          <tr>
+            <td><code>model</code></td>
+            <td>[X]</td>
+            <td>에이전트별 기본 모델 (생략 시 defaults 사용)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-info">
+        <div class="alert-title">[i] workspace 경로</div>
+        <p>workspace는 절대 경로를 권장합니다. <code>~</code> 는 사용 가능하지만, 
+        일부 환경에서 문제가 될 수 있습니다.</p>
+      </div>
+
+      <h3>2. channels.telegram.accounts - 텔레그램 봇</h3>
+      
+      <p>여러 텔레그램 봇을 정의합니다.</p>
+      
+      <div class="code-header">
+        <span>telegram accounts 섹션</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>{
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "accounts": {
+        "belphegor": {
+          "botToken": "1234567890:AAHxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        },
+        "mammon": {
+          "botToken": "0987654321:AAHyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+        },
+        "asmodeus": {
+          "botToken": "1122334455:AAHzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+        }
+      },
+      "dmPolicy": "pairing",
+      "groupPolicy": "allowlist"
+    }
+  }
+}</code></pre>
+
+      <table>
+        <thead>
+          <tr>
+            <th>필드</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>accounts.{name}</code></td>
+            <td>계정 식별자 (bindings에서 accountId로 참조)</td>
+          </tr>
+          <tr>
+            <td><code>botToken</code></td>
+            <td>BotFather에서 발급받은 봇 토큰</td>
+          </tr>
+          <tr>
+            <td><code>dmPolicy</code></td>
+            <td>DM 정책: pairing(승인제), open(모두 허용)</td>
+          </tr>
+          <tr>
+            <td><code>groupPolicy</code></td>
+            <td>그룹 정책: allowlist(허용목록), open(모두 허용)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>3. bindings - 라우팅 규칙</h3>
+      
+      <p>어떤 채널/계정의 메시지를 어떤 에이전트로 보낼지 정의합니다.</p>
+      
+      <div class="code-header">
+        <span>bindings 섹션</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>{
+  "bindings": [
+    {
+      "agentId": "belphegor",
+      "match": {
+        "channel": "telegram",
+        "accountId": "belphegor"
+      }
+    },
+    {
+      "agentId": "mammon",
+      "match": {
+        "channel": "telegram",
+        "accountId": "mammon"
+      }
+    },
+    {
+      "agentId": "asmodeus",
+      "match": {
+        "channel": "telegram",
+        "accountId": "asmodeus"
+      }
+    }
+  ]
+}</code></pre>
+
+      <p>Binding은 다음과 같이 작동합니다:</p>
+      
+      <div class="code-header">
+        <span>라우팅 로직</span>
+      </div>
+      <pre><code>메시지 수신
+    │
+    ▼
+match 조건 확인
+├─ channel = "telegram" ?
+├─ accountId = "mammon" ?
+│
+└─ 모두 일치 → agentId: "mammon" 으로 전달</code></pre>
+
+      <h3>4. auth.profiles - 인증 설정</h3>
+      
+      <p>AI 모델 제공자별 인증을 설정합니다.</p>
+      
+      <div class="code-header">
+        <span>auth.profiles 섹션</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>{
+  "auth": {
+    "profiles": {
+      "anthropic:default": {
+        "provider": "anthropic",
+        "mode": "oauth"
+      },
+      "google:default": {
+        "provider": "google",
+        "mode": "oauth"
+      },
+      "openai:default": {
+        "provider": "openai",
+        "mode": "api_key"
+      }
+    }
+  }
+}</code></pre>
+
+      <table>
+        <thead>
+          <tr>
+            <th>mode</th>
+            <th>설명</th>
+            <th>설정 방법</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>oauth</code></td>
+            <td>OAuth 인증 (브라우저 로그인)</td>
+            <td><code>openclaw configure</code> 또는 웹 UI</td>
+          </tr>
+          <tr>
+            <td><code>api_key</code></td>
+            <td>API 키 직접 입력</td>
+            <td>환경변수 또는 config</td>
+          </tr>
+          <tr>
+            <td><code>token</code></td>
+            <td>토큰 방식</td>
+            <td>config에 직접 입력</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>[NOTE] 전체 Config 예시</h2>
+      
+      <p>3개 에이전트 (Claude + Gemini x2) 완전한 config 예시입니다.</p>
+      
+      <div class="code-header">
+        <span>openclaw.json (전체)</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>{
+  "auth": {
+    "profiles": {
+      "anthropic:default": {
+        "provider": "anthropic",
+        "mode": "oauth"
+      },
+      "google:default": {
+        "provider": "google",
+        "mode": "oauth"
+      }
+    }
+  },
+  "agents": {
+    "list": [
+      {
+        "id": "belphegor",
+        "workspace": "/Users/username/belphegor"
+      },
+      {
+        "id": "mammon",
+        "workspace": "/Users/username/mammon"
+      },
+      {
+        "id": "asmodeus",
+        "workspace": "/Users/username/asmodeus"
+      }
+    ],
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-5"
+      }
+    },
+    "models": {
+      "anthropic/claude-sonnet-4-5": {
+        "alias": "sonnet"
+      },
+      "anthropic/claude-opus-4-5": {
+        "alias": "opus"
+      },
+      "google/gemini-2.0-flash": {
+        "alias": "flash"
+      }
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "accounts": {
+        "belphegor": {
+          "botToken": "YOUR_BOT1_TOKEN"
+        },
+        "mammon": {
+          "botToken": "YOUR_BOT2_TOKEN"
+        },
+        "asmodeus": {
+          "botToken": "YOUR_BOT3_TOKEN"
+        }
+      },
+      "dmPolicy": "pairing",
+      "groupPolicy": "allowlist",
+      "streamMode": "partial"
+    }
+  },
+  "bindings": [
+    {
+      "agentId": "belphegor",
+      "match": {
+        "channel": "telegram",
+        "accountId": "belphegor"
+      }
+    },
+    {
+      "agentId": "mammon",
+      "match": {
+        "channel": "telegram",
+        "accountId": "mammon"
+      }
+    },
+    {
+      "agentId": "asmodeus",
+      "match": {
+        "channel": "telegram",
+        "accountId": "asmodeus"
+      }
+    }
+  ],
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback"
+  }
+}</code></pre>
+
+      <h2>[SYNC] 에이전트별 모델 설정</h2>
+      
+      <p>각 에이전트마다 다른 AI 모델을 사용하려면 <code>agents.list</code>에서 개별 설정합니다.</p>
+      
+      <div class="code-header">
+        <span>에이전트별 모델 지정</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>{
+  "agents": {
+    "list": [
+      {
+        "id": "belphegor",
+        "workspace": "/Users/username/belphegor",
+        "model": {
+          "primary": "anthropic/claude-opus-4-5"
+        }
+      },
+      {
+        "id": "mammon",
+        "workspace": "/Users/username/mammon",
+        "model": {
+          "primary": "google/gemini-2.0-flash"
+        }
+      },
+      {
+        "id": "asmodeus",
+        "workspace": "/Users/username/asmodeus",
+        "model": {
+          "primary": "google/gemini-2.0-flash"
+        }
+      }
+    ]
+  }
+}</code></pre>
+
+      <h2>[!] 자주 하는 실수</h2>
+
+      <div class="card">
+        <h4>[X] 잘못된 agents 형식</h4>
+        <div class="code-header">
+          <span>틀린 예시</span>
+        </div>
+        <pre><code>// [X] 이렇게 하면 에러!
+{
+  "agents": {
+    "belphegor": { ... },
+    "mammon": { ... }
+  }
+}</code></pre>
+        <div class="code-header">
+          <span>올바른 예시</span>
+        </div>
+        <pre><code>// [OK] list 배열 사용
+{
+  "agents": {
+    "list": [
+      { "id": "belphegor", ... },
+      { "id": "mammon", ... }
+    ]
+  }
+}</code></pre>
+      </div>
+
+      <div class="card">
+        <h4>[X] accountId와 agentId 불일치</h4>
+        <p>bindings의 <code>accountId</code>는 channels.telegram.accounts의 키와 일치해야 합니다.</p>
+      </div>
+
+      <div class="card">
+        <h4>[X] 봇 토큰 중복 사용</h4>
+        <p>같은 봇 토큰을 여러 기기에서 동시에 사용하면 충돌합니다. 
+        한 곳에서만 실행하세요.</p>
+      </div>
+
+      <h2>[OK] Config 검증</h2>
+      
+      <p>설정을 적용하기 전에 검증합니다:</p>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># Config 문법 검사
+cat ~/.openclaw/openclaw.json | python3 -m json.tool
+
+# Gateway 상태 확인
+openclaw status
+
+# 에이전트 목록 확인
+openclaw agents --help</code></pre>
+
+      <!-- Page Navigation -->
+      <div class="page-nav">
+        <a href="workspace.html">
+          <span class="page-nav-label">이전</span>
+          <span class="page-nav-title">← 4. Workspace 구조</span>
+        </a>
+        <a href="run.html" class="page-nav-next">
+          <span class="page-nav-label">다음</span>
+          <span class="page-nav-title">6. 실행 & 테스트 →</span>
+        </a>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

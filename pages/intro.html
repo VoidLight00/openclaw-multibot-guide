@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1. 개요 - OpenClaw 멀티봇 가이드</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        [CLAW] OpenClaw <span>Guide</span>
+      </a>
+      
+      <nav>
+        <ul class="sidebar-nav">
+          <li><a href="../index.html">시작하기</a></li>
+        </ul>
+        
+        <div class="sidebar-section">가이드</div>
+        <ul class="sidebar-nav">
+          <li><a href="intro.html" class="active">1. 개요</a></li>
+          <li><a href="setup.html">2. 사전 준비</a></li>
+          <li><a href="models.html">3. AI 모델 설정</a></li>
+          <li><a href="workspace.html">4. Workspace 구조</a></li>
+          <li><a href="config.html">5. Config 설정</a></li>
+          <li><a href="run.html">6. 실행 & 테스트</a></li>
+        </ul>
+        
+        <div class="sidebar-section">실전</div>
+        <ul class="sidebar-nav">
+          <li><a href="examples.html">활용 예시</a></li>
+          <li><a href="troubleshooting.html">트러블슈팅</a></li>
+        </ul>
+        
+        <div class="sidebar-section">참고</div>
+        <ul class="sidebar-nav">
+          <li><a href="https://docs.openclaw.ai" target="_blank">공식 문서 ↗</a></li>
+          <li><a href="https://github.com/openclaw/openclaw" target="_blank">GitHub ↗</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <h1>1. 개요</h1>
+      <p class="lead">
+        왜 하나의 OpenClaw로 여러 에이전트를 운영해야 할까요? 
+        멀티 에이전트 아키텍처의 장점과 핵심 개념을 알아봅니다.
+      </p>
+
+      <h2>🤔 왜 멀티 에이전트인가?</h2>
+      
+      <p>
+        "하나의 AI 비서로 모든 걸 하면 되지 않나요?"라고 생각할 수 있습니다. 
+        하지만 실제로 사용해보면 여러 에이전트로 분리하는 것이 훨씬 효율적입니다.
+      </p>
+
+      <h3>단일 에이전트의 한계</h3>
+      
+      <div class="card">
+        <h4>[X] 컨텍스트 오염</h4>
+        <p>트레이딩 분석 중에 "오늘 저녁 뭐 먹지?" 같은 대화가 섞이면 맥락이 깨집니다.</p>
+      </div>
+      
+      <div class="card">
+        <h4>[X] 페르소나 충돌</h4>
+        <p>전문적인 코딩 어시스턴트가 갑자기 친근한 말투로 바뀌면 어색합니다.</p>
+      </div>
+      
+      <div class="card">
+        <h4>[X] 모델 비용</h4>
+        <p>간단한 리마인더에도 비싼 Claude Opus를 쓰는 건 낭비입니다.</p>
+      </div>
+
+      <h3>멀티 에이전트의 장점</h3>
+      
+      <div class="card-grid">
+        <div class="card">
+          <h4>[OK] 역할 분리</h4>
+          <p>각 에이전트가 전문 분야에 집중. 트레이딩봇, 코딩봇, 일상봇 분리.</p>
+        </div>
+        <div class="card">
+          <h4>[OK] 컨텍스트 격리</h4>
+          <p>대화 히스토리가 섞이지 않아 더 정확한 응답.</p>
+        </div>
+        <div class="card">
+          <h4>[OK] 모델 최적화</h4>
+          <p>복잡한 작업엔 Opus, 간단한 대화엔 Flash. 비용 절감.</p>
+        </div>
+        <div class="card">
+          <h4>[OK] 독립적 설정</h4>
+          <p>에이전트마다 다른 도구, 메모리, 성격 설정 가능.</p>
+        </div>
+      </div>
+
+      <h2>[BUILD] 아키텍처</h2>
+      
+      <p>OpenClaw 멀티봇의 핵심 아키텍처를 이해해봅시다.</p>
+
+      <h3>핵심 컴포넌트</h3>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>컴포넌트</th>
+            <th>역할</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Gateway</strong></td>
+            <td>중앙 라우터</td>
+            <td>모든 메시지를 수신하고 적절한 에이전트로 전달</td>
+          </tr>
+          <tr>
+            <td><strong>Agent</strong></td>
+            <td>AI 비서</td>
+            <td>독립적인 설정, 메모리, AI 모델을 가진 개별 비서</td>
+          </tr>
+          <tr>
+            <td><strong>Channel</strong></td>
+            <td>메시징 연결</td>
+            <td>Telegram, Discord 등 외부 메신저와의 연결</td>
+          </tr>
+          <tr>
+            <td><strong>Binding</strong></td>
+            <td>라우팅 규칙</td>
+            <td>어떤 채널의 메시지를 어떤 에이전트로 보낼지 결정</td>
+          </tr>
+          <tr>
+            <td><strong>Workspace</strong></td>
+            <td>작업 공간</td>
+            <td>에이전트의 파일, 메모리, 설정이 저장되는 디렉토리</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>메시지 흐름</h3>
+      
+      <div class="code-header">
+        <span>메시지 처리 과정</span>
+      </div>
+      <pre><code>1. 사용자가 @MyBot_bot 에 "안녕" 전송
+                    │
+                    ▼
+2. Telegram API가 OpenClaw Gateway로 메시지 전달
+                    │
+                    ▼
+3. Gateway가 bindings 확인
+   → "telegram + MyBot_bot = Agent A"
+                    │
+                    ▼
+4. Agent A가 메시지 처리
+   → workspace 컨텍스트 로드
+   → AI 모델 호출 (Claude/Gemini/GPT)
+   → 응답 생성
+                    │
+                    ▼
+5. 응답이 Telegram으로 전송</code></pre>
+
+      <h2>[CHART] 에이전트 설계 예시</h2>
+      
+      <p>실제로 어떻게 에이전트를 분리할 수 있을까요? 몇 가지 예시입니다.</p>
+
+      <h3>예시 1: 역할 기반 분리</h3>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>에이전트</th>
+            <th>역할</th>
+            <th>모델</th>
+            <th>특징</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>[TRADE] 트레이더</td>
+            <td>투자/트레이딩</td>
+            <td>Claude Opus</td>
+            <td>고급 분석, 신중한 판단</td>
+          </tr>
+          <tr>
+            <td>[CODE] 코더</td>
+            <td>개발/코딩</td>
+            <td>Claude Sonnet</td>
+            <td>코드 생성, 디버깅</td>
+          </tr>
+          <tr>
+            <td>[CAL] 비서</td>
+            <td>일정/리마인더</td>
+            <td>Gemini Flash</td>
+            <td>빠른 응답, 저비용</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>예시 2: 모델 기반 분리</h3>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>에이전트</th>
+            <th>모델</th>
+            <th>용도</th>
+            <th>비용</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Pro</td>
+            <td>Claude Opus / GPT-4</td>
+            <td>복잡한 분석, 중요한 결정</td>
+            <td>$$$</td>
+          </tr>
+          <tr>
+            <td>Standard</td>
+            <td>Claude Sonnet / GPT-3.5</td>
+            <td>일반적인 대화, 작업</td>
+            <td>$$</td>
+          </tr>
+          <tr>
+            <td>Lite</td>
+            <td>Gemini Flash</td>
+            <td>간단한 질문, 알림</td>
+            <td>$</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-success">
+        <div class="alert-title">[i] 팁</div>
+        <p>처음엔 2-3개 에이전트로 시작하세요. 필요에 따라 나중에 추가할 수 있습니다.</p>
+      </div>
+
+      <h2>[OK] 체크리스트</h2>
+      
+      <p>다음 장으로 넘어가기 전에 확인하세요:</p>
+      
+      <div class="card">
+        <p>[ ] 멀티 에이전트가 필요한 이유를 이해했다</p>
+        <p>[ ] Gateway, Agent, Binding 개념을 이해했다</p>
+        <p>[ ] 내 에이전트를 어떻게 분리할지 대략적인 계획이 있다</p>
+      </div>
+
+      <!-- Page Navigation -->
+      <div class="page-nav">
+        <a href="../index.html">
+          <span class="page-nav-label">이전</span>
+          <span class="page-nav-title">← 시작하기</span>
+        </a>
+        <a href="setup.html" class="page-nav-next">
+          <span class="page-nav-label">다음</span>
+          <span class="page-nav-title">2. 사전 준비 →</span>
+        </a>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

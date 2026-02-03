@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3. AI 모델 설정 - OpenClaw 멀티봇 가이드</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="../index.html" class="sidebar-logo">[CLAW] OpenClaw <span>Guide</span></a>
+      <nav>
+        <ul class="sidebar-nav"><li><a href="../index.html">시작하기</a></li></ul>
+        <div class="sidebar-section">가이드</div>
+        <ul class="sidebar-nav">
+          <li><a href="intro.html">1. 개요</a></li>
+          <li><a href="setup.html">2. 사전 준비</a></li>
+          <li><a href="models.html" class="active">3. AI 모델 설정</a></li>
+          <li><a href="workspace.html">4. Workspace 구조</a></li>
+          <li><a href="config.html">5. Config 설정</a></li>
+          <li><a href="run.html">6. 실행 & 테스트</a></li>
+        </ul>
+        <div class="sidebar-section">실전</div>
+        <ul class="sidebar-nav">
+          <li><a href="examples.html">활용 예시</a></li>
+          <li><a href="troubleshooting.html">트러블슈팅</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <h1>3. AI 모델 설정</h1>
+      <p class="lead">
+        Claude, Gemini, GPT 등 다양한 AI 모델을 연동합니다.
+        OAuth와 API Key 방식의 차이점과 설정 방법을 알아봅니다.
+      </p>
+
+      <h2>[MODEL] 지원 모델</h2>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>제공자</th>
+            <th>모델</th>
+            <th>인증 방식</th>
+            <th>비용</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Anthropic</strong></td>
+            <td>Claude Opus 4.5, Sonnet 4.5</td>
+            <td>OAuth / API Key</td>
+            <td>유료</td>
+          </tr>
+          <tr>
+            <td><strong>Google</strong></td>
+            <td>Gemini 2.0 Flash, Pro</td>
+            <td>OAuth / API Key</td>
+            <td>무료 티어 있음</td>
+          </tr>
+          <tr>
+            <td><strong>OpenAI</strong></td>
+            <td>GPT-4o, GPT-4 Turbo</td>
+            <td>API Key</td>
+            <td>유료</td>
+          </tr>
+          <tr>
+            <td><strong>OpenRouter</strong></td>
+            <td>다양한 모델</td>
+            <td>API Key</td>
+            <td>모델별 상이</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>[KEY] 인증 방식</h2>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4>OAuth (권장)</h4>
+          <p><span class="badge badge-success">RECOMMENDED</span></p>
+          <ul>
+            <li>브라우저로 로그인</li>
+            <li>API 키 관리 불필요</li>
+            <li>자동 토큰 갱신</li>
+          </ul>
+          <p><strong>지원:</strong> Anthropic, Google</p>
+        </div>
+        <div class="card">
+          <h4>API Key</h4>
+          <p><span class="badge">TRADITIONAL</span></p>
+          <ul>
+            <li>직접 키 발급 필요</li>
+            <li>환경변수 또는 config에 저장</li>
+            <li>키 관리 필요</li>
+          </ul>
+          <p><strong>지원:</strong> 모든 제공자</p>
+        </div>
+      </div>
+
+      <h2>[SETUP] Google OAuth 설정 (실전)</h2>
+      
+      <div class="alert alert-warning">
+        <div class="alert-title">[!] 주의: CLI 명령어 차이</div>
+        <p><code>openclaw auth add google</code> 같은 명령어는 존재하지 않습니다. 
+        버전에 따라 명령어가 다르니 아래 방법을 따르세요.</p>
+      </div>
+
+      <h3>방법 1: openclaw configure (권장)</h3>
+      
+      <p>가장 확실한 방법입니다. 대화형 마법사가 안내합니다.</p>
+      
+      <div class="steps">
+        <div class="step">
+          <h4>configure 실행</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>openclaw configure</code></pre>
+          <p>또는</p>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>openclaw setup</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>Google 선택</h4>
+          <p>프롬프트에서 Google/Gemini 관련 옵션 선택</p>
+        </div>
+        
+        <div class="step">
+          <h4>브라우저 자동 열림</h4>
+          <p>Google 계정 선택 → "OpenClaw" 앱 권한 승인</p>
+        </div>
+        
+        <div class="step">
+          <h4>완료 확인</h4>
+          <p>터미널에 성공 메시지 표시. Gateway 재시작 필요할 수 있음.</p>
+        </div>
+      </div>
+
+      <h3>방법 2: 웹 UI Dashboard</h3>
+      
+      <div class="steps">
+        <div class="step">
+          <h4>Dashboard 열기</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>openclaw dashboard</code></pre>
+          <p>브라우저가 자동으로 열립니다. 토큰이 포함된 URL:</p>
+          <pre><code>http://localhost:18789/?token=xxxxx</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>Auth 섹션 이동</h4>
+          <p>좌측 메뉴 또는 Settings에서 Authentication 찾기</p>
+        </div>
+        
+        <div class="step">
+          <h4>Google 프로필 추가</h4>
+          <p>Auth Profiles → Add Entry → google:default 생성</p>
+          <ul>
+            <li>Provider: Google</li>
+            <li>Mode: oauth</li>
+          </ul>
+        </div>
+        
+        <div class="step">
+          <h4>Connect 클릭</h4>
+          <p>Google 로그인 창이 열리면 승인</p>
+        </div>
+      </div>
+
+      <h3>방법 3: CLI로 직접 설정</h3>
+      
+      <p>config 값을 직접 설정하는 방법:</p>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># Google OAuth 프로필 추가
+openclaw config set auth.profiles.google:default.provider google
+openclaw config set auth.profiles.google:default.mode oauth
+
+# Gateway 재시작
+openclaw gateway restart</code></pre>
+      
+      <p>재시작 후 Dashboard에서 Connect 버튼으로 실제 인증을 완료합니다.</p>
+
+      <h3>[FIX] 문제 발생 시: Doctor 사용</h3>
+      
+      <p>설정이 꼬였을 때 doctor 명령어로 진단:</p>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># 헬스 체크 및 자동 수정
+openclaw doctor
+
+# 상태 확인
+openclaw status
+
+# 버전 확인 (업데이트 필요할 수 있음)
+openclaw --version</code></pre>
+
+      <div class="alert alert-info">
+        <div class="alert-title">[i] 버전 업데이트</div>
+        <p>오래된 버전에서는 일부 명령어가 없을 수 있습니다. 
+        최신 버전으로 업데이트하세요:</p>
+        <pre><code>npm update -g openclaw</code></pre>
+      </div>
+
+      <h2>[ANTHROPIC] Claude 설정</h2>
+
+      <h3>OAuth 방식</h3>
+      
+      <p>Google과 동일하게 <code>openclaw configure</code>에서 Anthropic 선택</p>
+
+      <h3>API Key 방식</h3>
+      
+      <div class="code-header">
+        <span>~/.openclaw/.env</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>ANTHROPIC_API_KEY=sk-ant-api03-xxxxxxxxxxxxxxxx</code></pre>
+
+      <p>API 키는 <a href="https://console.anthropic.com/" target="_blank">Anthropic Console</a>에서 발급</p>
+
+      <h2>[OPENAI] GPT 설정</h2>
+      
+      <p>OpenAI는 API Key 방식만 지원합니다.</p>
+      
+      <div class="code-header">
+        <span>~/.openclaw/.env</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
+
+      <p>API 키: <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></p>
+
+      <h2>[CONFIG] 에이전트별 모델 지정</h2>
+      
+      <div class="code-header">
+        <span>openclaw.json</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>{
+  "agents": {
+    "list": [
+      {
+        "id": "agent-claude",
+        "workspace": "/path/to/workspace1",
+        "model": {
+          "primary": "anthropic/claude-opus-4-5"
+        }
+      },
+      {
+        "id": "agent-gemini",
+        "workspace": "/path/to/workspace2",
+        "model": {
+          "primary": "google/gemini-2.0-flash"
+        }
+      }
+    ]
+  }
+}</code></pre>
+
+      <h2>[RUNTIME] 런타임 모델 변경</h2>
+      
+      <p>채팅 중 모델 변경:</p>
+      
+      <div class="code-header">
+        <span>텔레그램에서</span>
+      </div>
+      <pre><code>/model opus      # Claude Opus로 변경
+/model sonnet    # Claude Sonnet으로 변경
+/model flash     # Gemini Flash로 변경</code></pre>
+
+      <h2>[COMPARE] 모델 비교</h2>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>모델</th>
+            <th>장점</th>
+            <th>추천 용도</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Claude Opus</td>
+            <td>최고 성능, 복잡한 추론</td>
+            <td>분석, 중요 결정</td>
+          </tr>
+          <tr>
+            <td>Claude Sonnet</td>
+            <td>균형 잡힌 성능/비용</td>
+            <td>일반 작업, 코딩</td>
+          </tr>
+          <tr>
+            <td>Gemini Flash</td>
+            <td>빠름, 저렴/무료</td>
+            <td>간단한 대화, 리마인더</td>
+          </tr>
+          <tr>
+            <td>GPT-4o</td>
+            <td>멀티모달, 빠름</td>
+            <td>이미지 분석, 범용</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>[CHECK] 체크리스트</h2>
+      
+      <div class="card">
+        <p>[ ] 최소 1개 이상의 AI 모델 인증 완료</p>
+        <p>[ ] <code>openclaw status</code>로 연결 상태 확인</p>
+        <p>[ ] 에이전트별 모델 배치 계획 수립</p>
+      </div>
+
+      <div class="page-nav">
+        <a href="setup.html">
+          <span class="page-nav-label">이전</span>
+          <span class="page-nav-title">← 2. 사전 준비</span>
+        </a>
+        <a href="workspace.html" class="page-nav-next">
+          <span class="page-nav-label">다음</span>
+          <span class="page-nav-title">4. Workspace 구조 →</span>
+        </a>
+      </div>
+    </main>
+  </div>
+  <script src="../js/main.js"></script>
+</body>
+</html>

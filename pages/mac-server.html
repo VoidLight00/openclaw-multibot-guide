@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mac Mini 서버 설정 - OpenClaw 멀티봇 가이드</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="../index.html" class="sidebar-logo">[CLAW] OpenClaw <span>Guide</span></a>
+      <nav>
+        <ul class="sidebar-nav"><li><a href="../index.html">시작하기</a></li></ul>
+        <div class="sidebar-section">가이드</div>
+        <ul class="sidebar-nav">
+          <li><a href="intro.html">1. 개요</a></li>
+          <li><a href="setup.html">2. 사전 준비</a></li>
+          <li><a href="models.html">3. AI 모델 설정</a></li>
+          <li><a href="workspace.html">4. Workspace 구조</a></li>
+          <li><a href="config.html">5. Config 설정</a></li>
+          <li><a href="run.html">6. 실행 & 테스트</a></li>
+        </ul>
+        <div class="sidebar-section">플랫폼</div>
+        <ul class="sidebar-nav">
+          <li><a href="mac-server.html" class="active">Mac Mini 서버</a></li>
+          <li><a href="windows.html">Windows (WSL2)</a></li>
+        </ul>
+        <div class="sidebar-section">실전</div>
+        <ul class="sidebar-nav">
+          <li><a href="examples.html">활용 예시</a></li>
+          <li><a href="troubleshooting.html">트러블슈팅</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <h1>Mac Mini 서버 설정</h1>
+      <p class="lead">
+        Mac Mini를 24/7 OpenClaw 서버로 운영하기 위한 필수 설정.
+        잠자기 비활성화, 자동 재시작, Gateway 자동 실행까지.
+      </p>
+
+      <h2>[1] 잠자기 완전 비활성화</h2>
+      
+      <p>Mac Mini가 서버로 동작하려면 절대 잠들면 안 됩니다.</p>
+      
+      <div class="code-header">
+        <span>Terminal (한 줄로 실행)</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>sudo pmset -a sleep 0 disksleep 0 displaysleep 0 hibernatemode 0 standby 0 autopoweroff 0 autorestart 1 womp 1</code></pre>
+
+      <h3>설정 상세</h3>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>옵션</th>
+            <th>값</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>sleep 0</code></td>
+            <td>끔</td>
+            <td>시스템 잠자기 비활성화</td>
+          </tr>
+          <tr>
+            <td><code>disksleep 0</code></td>
+            <td>끔</td>
+            <td>디스크 잠자기 비활성화</td>
+          </tr>
+          <tr>
+            <td><code>displaysleep 0</code></td>
+            <td>끔</td>
+            <td>화면 잠자기 비활성화</td>
+          </tr>
+          <tr>
+            <td><code>hibernatemode 0</code></td>
+            <td>끔</td>
+            <td>최대 절전 모드 비활성화</td>
+          </tr>
+          <tr>
+            <td><code>standby 0</code></td>
+            <td>끔</td>
+            <td>대기 모드 비활성화</td>
+          </tr>
+          <tr>
+            <td><code>autopoweroff 0</code></td>
+            <td>끔</td>
+            <td>자동 전원 끄기 비활성화</td>
+          </tr>
+          <tr>
+            <td><code>autorestart 1</code></td>
+            <td>켬</td>
+            <td>정전 후 자동 재시작</td>
+          </tr>
+          <tr>
+            <td><code>womp 1</code></td>
+            <td>켬</td>
+            <td>Wake on LAN (네트워크로 깨우기)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>[2] OpenClaw Gateway 자동 실행</h2>
+      
+      <p>부팅 시 Gateway가 자동으로 시작되도록 설정합니다.</p>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># launchd 서비스 설치
+openclaw daemon install
+
+# 서비스 상태 확인
+openclaw daemon status
+
+# 서비스 시작
+openclaw daemon start</code></pre>
+
+      <h2>[3] 설정 확인</h2>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># 전원 관리 설정 확인
+pmset -g
+
+# OpenClaw 상태 확인
+openclaw status</code></pre>
+
+      <h3>예상 출력</h3>
+      
+      <div class="code-header">
+        <span>pmset -g 결과</span>
+      </div>
+      <pre><code>System-wide power settings:
+ sleep             0
+ disksleep         0
+ displaysleep      0
+ hibernatemode     0
+ standby           0
+ autopoweroff      0
+ autorestart       1
+ womp              1</code></pre>
+
+      <h2>[RESULT] 결과</h2>
+      
+      <div class="card">
+        <h4>이 설정 후:</h4>
+        <ul>
+          <li>Mac Mini가 <strong>절대 잠들지 않음</strong></li>
+          <li>정전되어도 전원 복구 시 <strong>자동으로 켜짐</strong></li>
+          <li>OpenClaw Gateway가 부팅 시 <strong>자동 실행</strong>됨</li>
+          <li>Wake on LAN으로 원격에서 깨울 수 있음</li>
+        </ul>
+      </div>
+
+      <div class="alert alert-info">
+        <div class="alert-title">[i] 추가 팁</div>
+        <p>Mac Mini를 headless(모니터 없이)로 운영하려면 HDMI 더미 플러그나 
+        시스템 환경설정에서 "화면 공유" 활성화를 권장합니다.</p>
+      </div>
+
+      <div class="page-nav">
+        <a href="run.html">
+          <span class="page-nav-label">이전</span>
+          <span class="page-nav-title">← 6. 실행 & 테스트</span>
+        </a>
+        <a href="windows.html" class="page-nav-next">
+          <span class="page-nav-label">다음</span>
+          <span class="page-nav-title">Windows (WSL2) →</span>
+        </a>
+      </div>
+    </main>
+  </div>
+  <script src="../js/main.js"></script>
+</body>
+</html>

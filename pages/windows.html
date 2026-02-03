@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Windows 11 WSL2 OpenClaw 완전 설치 가이드</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --yellow: #FFE500;
+      --pink: #FF6B9D;
+      --blue: #00D4FF;
+      --green: #7CFF6B;
+      --orange: #FF9F43;
+      --purple: #A855F7;
+      --black: #000000;
+      --white: #FFFFFF;
+      --bg: #FFF5E1;
+      --shadow: 6px 6px 0px var(--black);
+      --shadow-sm: 4px 4px 0px var(--black);
+      --border: 3px solid var(--black);
+      --border-thick: 4px solid var(--black);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background-color: var(--bg);
+      color: var(--black);
+      line-height: 1.7;
+      font-size: 18px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Header */
+    header {
+      background: var(--yellow);
+      border: var(--border-thick);
+      box-shadow: var(--shadow);
+      padding: 40px;
+      margin-bottom: 40px;
+      text-align: center;
+      transform: rotate(-0.5deg);
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+    }
+
+    header .subtitle {
+      font-size: 1.1rem;
+      background: var(--black);
+      color: var(--white);
+      display: inline-block;
+      padding: 8px 16px;
+      transform: rotate(1deg);
+    }
+
+    /* Sections */
+    section {
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: var(--pink);
+      border: var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      display: inline-block;
+      transform: rotate(-0.3deg);
+    }
+
+    h2.blue { background: var(--blue); }
+    h2.green { background: var(--green); }
+    h2.orange { background: var(--orange); }
+    h2.purple { background: var(--purple); color: var(--white); }
+    h2.yellow { background: var(--yellow); }
+
+    h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin: 24px 0 16px 0;
+      padding-left: 16px;
+      border-left: 6px solid var(--black);
+    }
+
+    h4 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 20px 0 12px 0;
+      text-decoration: underline;
+      text-decoration-thickness: 3px;
+      text-underline-offset: 4px;
+    }
+
+    p {
+      margin-bottom: 16px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--white);
+      border: var(--border);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card.yellow { background: var(--yellow); }
+    .card.pink { background: var(--pink); }
+    .card.blue { background: var(--blue); }
+    .card.green { background: var(--green); }
+
+    /* Environment specs */
+    .specs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .spec-item {
+      background: var(--white);
+      border: var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 16px;
+    }
+
+    .spec-item strong {
+      display: block;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+      color: #666;
+    }
+
+    .spec-item span {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    /* Code blocks */
+    pre {
+      font-family: 'Space Mono', monospace;
+      background: var(--black);
+      color: var(--green);
+      border: var(--border);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin: 16px 0;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    pre.output {
+      background: #1a1a2e;
+      color: var(--white);
+    }
+
+    code {
+      font-family: 'Space Mono', monospace;
+      background: var(--yellow);
+      padding: 2px 8px;
+      border: 2px solid var(--black);
+      font-size: 0.9em;
+    }
+
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    /* Lists */
+    ul, ol {
+      margin: 16px 0;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    li::marker {
+      font-weight: 700;
+    }
+
+    /* Step numbers */
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .step-number {
+      background: var(--black);
+      color: var(--white);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      border: 3px solid var(--black);
+      box-shadow: 3px 3px 0px var(--yellow);
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    /* Questions/Answers */
+    .qa {
+      background: var(--white);
+      border: var(--border);
+      margin-bottom: 16px;
+    }
+
+    .qa-question {
+      background: var(--purple);
+      color: var(--white);
+      padding: 12px 16px;
+      font-weight: 700;
+      border-bottom: var(--border);
+    }
+
+    .qa-answer {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .qa-answer .badge {
+      background: var(--green);
+      border: 2px solid var(--black);
+      padding: 4px 12px;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      background: var(--white);
+      border: var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    th {
+      background: var(--black);
+      color: var(--white);
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 2px solid var(--black);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Links */
+    a {
+      color: var(--black);
+      text-decoration: none;
+      background: var(--blue);
+      padding: 2px 6px;
+      border: 2px solid var(--black);
+      transition: all 0.1s;
+    }
+
+    a:hover {
+      box-shadow: 3px 3px 0px var(--black);
+      transform: translate(-2px, -2px);
+    }
+
+    /* Alert boxes */
+    .alert {
+      border: var(--border);
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: var(--shadow);
+    }
+
+    .alert.success {
+      background: var(--green);
+    }
+
+    .alert.warning {
+      background: var(--orange);
+    }
+
+    .alert.info {
+      background: var(--blue);
+    }
+
+    .alert-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Command reference */
+    .cmd-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .cmd-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: var(--white);
+      border: var(--border);
+      padding: 12px;
+    }
+
+    .cmd-item code {
+      background: var(--black);
+      color: var(--green);
+      border-color: var(--black);
+    }
+
+    .cmd-item span {
+      display: flex;
+      align-items: center;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--black);
+      color: var(--white);
+      border: var(--border);
+      padding: 30px;
+      margin-top: 60px;
+      text-align: center;
+    }
+
+    footer .version {
+      background: var(--yellow);
+      color: var(--black);
+      display: inline-block;
+      padding: 8px 16px;
+      font-weight: 700;
+      margin-top: 16px;
+      border: 3px solid var(--white);
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.8rem;
+      }
+
+      h2 {
+        font-size: 1.4rem;
+        padding: 12px 16px;
+      }
+
+      .cmd-item {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Emoji badges */
+    .emoji-badge {
+      font-size: 2rem;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    /* TOC */
+    .toc {
+      background: var(--white);
+      border: var(--border);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 40px;
+    }
+
+    .toc h3 {
+      border: none;
+      padding: 0;
+      margin: 0 0 16px 0;
+      font-size: 1.2rem;
+    }
+
+    .toc ol {
+      margin: 0;
+    }
+
+    .toc a {
+      background: transparent;
+      border: none;
+      padding: 0;
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+    }
+
+    .toc a:hover {
+      background: var(--yellow);
+      box-shadow: none;
+      transform: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Windows 11 WSL2<br>OpenClaw 완전 설치 가이드</h1>
+      <div class="subtitle">한국어 가이드 - 처음부터 끝까지</div>
+    </header>
+
+    <div class="toc">
+      <h3>목차</h3>
+      <ol>
+        <li><a href="#step1">WSL2 설치 확인</a></li>
+        <li><a href="#step2">WSL Ubuntu 설정</a></li>
+        <li><a href="#step3">OpenClaw 설치</a></li>
+        <li><a href="#step4">초기 설정</a></li>
+        <li><a href="#step5">AI 프로바이더 및 채널 설정</a></li>
+        <li><a href="#step6">Telegram 봇 페어링 및 테스트</a></li>
+        <li><a href="#step7">대시보드 접속</a></li>
+        <li><a href="#troubleshooting">문제 해결</a></li>
+        <li><a href="#reboot">Windows 재부팅 후 시작</a></li>
+        <li><a href="#commands">유용한 명령어</a></li>
+      </ol>
+    </div>
+
+    <section>
+      <h2 class="blue">테스트 환경</h2>
+      <div class="specs">
+        <div class="spec-item">
+          <strong>시스템</strong>
+          <span>Dell 노트북</span>
+        </div>
+        <div class="spec-item">
+          <strong>CPU</strong>
+          <span>Intel i5-8265U</span>
+        </div>
+        <div class="spec-item">
+          <strong>RAM</strong>
+          <span>16GB</span>
+        </div>
+        <div class="spec-item">
+          <strong>스토리지</strong>
+          <span>256GB + 500GB SSD</span>
+        </div>
+        <div class="spec-item">
+          <strong>OS</strong>
+          <span>Windows 11</span>
+        </div>
+        <div class="spec-item">
+          <strong>WSL</strong>
+          <span>2.4.13.0</span>
+        </div>
+        <div class="spec-item">
+          <strong>배포판</strong>
+          <span>Ubuntu 24.04.2 LTS</span>
+        </div>
+      </div>
+
+      <div class="card yellow">
+        <strong>사전 요구사항:</strong>
+        <ul>
+          <li>Windows 11 (또는 Windows 10)</li>
+          <li>관리자 권한</li>
+          <li>인터넷 연결</li>
+          <li>최소 16GB RAM 권장</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="step1">
+      <h2>1단계: WSL2 설치 확인</h2>
+      
+      <h3>1.1 WSL 버전 확인</h3>
+      <p>PowerShell을 열고 다음 명령어를 실행:</p>
+      <pre><code>wsl --version
+wsl --list --verbose</code></pre>
+      
+      <p><strong>결과 예시:</strong></p>
+      <pre class="output"><code>WSL 버전: 2.4.13.0
+커널 버전: 5.15.167.4-1
+...
+
+  NAME      STATE           VERSION
+* Ubuntu    Stopped         2</code></pre>
+
+      <h3>1.2 WSL이 없는 경우 설치</h3>
+      <p>PowerShell을 <strong>관리자 권한</strong>으로 열고:</p>
+      <pre><code>wsl --install -d Ubuntu-24.04</code></pre>
+      <div class="alert info">
+        <div class="alert-title">정보</div>
+        설치 후 재부팅이 필요할 수 있습니다.
+      </div>
+    </section>
+
+    <section id="step2">
+      <h2 class="green">2단계: WSL Ubuntu 설정</h2>
+      
+      <h3>2.1 Ubuntu 시작</h3>
+      <p>PowerShell에서:</p>
+      <pre><code>wsl</code></pre>
+      <p>또는 시작 메뉴에서 "Ubuntu" 검색하여 실행.</p>
+
+      <h3>2.2 systemd 활성화 확인</h3>
+      <p>Ubuntu 터미널에서:</p>
+      <pre><code>systemctl --user status</code></pre>
+      
+      <p><strong>정상 출력:</strong></p>
+      <pre class="output"><code>● DESKTOP-XXXXXX
+    State: running
+    ...</code></pre>
+
+      <p><strong>만약 에러가 나면 systemd 활성화:</strong></p>
+      <pre><code>sudo tee /etc/wsl.conf >/dev/null &lt;&lt;'EOF'
+[boot]
+systemd=true
+EOF</code></pre>
+
+      <p>그 다음 PowerShell로 돌아가서:</p>
+      <pre><code>wsl --shutdown</code></pre>
+      <p>Ubuntu를 다시 시작하고 systemctl 명령어로 확인.</p>
+
+      <h3>2.3 Node.js 버전 확인</h3>
+      <pre><code>node -v
+npm -v</code></pre>
+
+      <div class="card">
+        <strong>필요 버전:</strong> Node.js 22 이상
+      </div>
+
+      <p><strong>설치되지 않았거나 버전이 낮으면:</strong></p>
+      <pre><code>curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs</code></pre>
+
+      <div class="alert success">
+        <div class="alert-title">확인된 버전</div>
+        <ul>
+          <li>Node: v22.16.0</li>
+          <li>npm: 10.9.2</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="step3">
+      <h2 class="orange">3단계: OpenClaw 설치</h2>
+      
+      <h3>3.1 인스톨러 실행</h3>
+      <pre><code>curl -fsSL https://openclaw.bot/install.sh | bash</code></pre>
+
+      <h3>3.2 설치 과정 질문 응답</h3>
+      <h4>Doctor 자동 실행</h4>
+
+      <div class="qa">
+        <div class="qa-question">1. Gateway 토큰 생성<br>"Generate and configure a gateway token now?"</div>
+        <div class="qa-answer"><span class="badge">Yes</span> (Enter)</div>
+      </div>
+
+      <div class="qa">
+        <div class="qa-question">2. 권한 강화<br>"Tighten permissions on ~/.openclaw to 700?"</div>
+        <div class="qa-answer"><span class="badge">Yes</span> (Enter)</div>
+      </div>
+
+      <div class="qa">
+        <div class="qa-question">3. 세션 저장소 생성<br>"Create Session store dir at ~/.openclaw/agents/main/sessions?"</div>
+        <div class="qa-answer"><span class="badge">Yes</span> (Enter)</div>
+      </div>
+
+      <div class="qa">
+        <div class="qa-question">4. OAuth 디렉토리 생성<br>"Create OAuth dir at ~/.openclaw/credentials?"</div>
+        <div class="qa-answer"><span class="badge">Yes</span> (Enter)</div>
+      </div>
+
+      <div class="qa">
+        <div class="qa-question">5. 게이트웨이 서비스 설치<br>"Install gateway service now?"</div>
+        <div class="qa-answer"><span class="badge">Yes</span> (Enter)</div>
+      </div>
+
+      <div class="qa">
+        <div class="qa-question">6. 런타임 선택<br>"Gateway service runtime"</div>
+        <div class="qa-answer"><span class="badge">Node (recommended)</span> (Enter)</div>
+      </div>
+
+      <h3>3.3 설치 완료 확인</h3>
+      <pre class="output"><code>🦞 OpenClaw 2026.1.29 (a5b4d22)
+
+Dashboard URL: http://127.0.0.1:18789/</code></pre>
+    </section>
+
+    <section id="step4">
+      <h2 class="purple">4단계: 초기 설정</h2>
+      
+      <h3>4.1 Gateway 모드 설정</h3>
+      <pre><code>openclaw config set gateway.mode local</code></pre>
+
+      <h3>4.2 게이트웨이 재시작</h3>
+      <pre><code>openclaw daemon restart</code></pre>
+
+      <h3>4.3 상태 확인</h3>
+      <pre><code>openclaw status</code></pre>
+
+      <div class="card green">
+        <strong>확인 사항:</strong>
+        <ul>
+          <li>Gateway service: running</li>
+          <li>Gateway: reachable</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="step5">
+      <h2 class="blue">5단계: AI 프로바이더 및 채널 설정</h2>
+      
+      <h3>5.1 대화형 설정 시작</h3>
+      <pre><code>openclaw configure</code></pre>
+
+      <h3>5.2 Gateway 위치 선택</h3>
+      <div class="qa">
+        <div class="qa-question">"Where will the Gateway run?"</div>
+        <div class="qa-answer"><span class="badge">Local (this machine)</span> (Enter)</div>
+      </div>
+
+      <h3>5.3 섹션 선택</h3>
+      <div class="card">
+        <ol>
+          <li>화살표 키(↓)로 <strong>Model</strong> 이동</li>
+          <li>스페이스바로 선택 (체크)</li>
+          <li>화살표 키(↓)로 <strong>Channels</strong> 이동</li>
+          <li>스페이스바로 선택 (체크)</li>
+          <li>화살표 키(↓)로 <strong>Continue</strong> 이동</li>
+          <li>Enter</li>
+        </ol>
+      </div>
+
+      <h3>5.4 Model 설정 (Claude API)</h3>
+      <p>자동으로 Anthropic OAuth 모델이 설정됩니다:</p>
+      <pre class="output"><code>◇  Anthropic OAuth models
+│  anthropic/claude-opus-4-5
+Updated ~/.openclaw/openclaw.json</code></pre>
+
+      <h3>5.5 Telegram 채널 설정</h3>
+      
+      <h4>5.5.1 채널 선택</h4>
+      <p>자동으로 <strong>Telegram (Bot API)</strong> 선택됨</p>
+
+      <h4>5.5.2 Telegram 봇 생성</h4>
+      <div class="card blue">
+        <strong>스마트폰 또는 PC에서:</strong>
+        <ol>
+          <li>Telegram 앱 열기</li>
+          <li>@BotFather 검색 후 채팅 시작</li>
+          <li><code>/newbot</code> 명령어 실행</li>
+          <li>봇 이름 입력 (예: "My OpenClaw Bot")</li>
+          <li>봇 사용자명 입력 (예: "my_openclaw_bot")</li>
+          <li><strong>토큰 복사</strong> (형식: <code>123456789:ABC...</code>)</li>
+        </ol>
+      </div>
+
+      <h4>5.5.3 토큰 입력</h4>
+      <p>터미널에서:</p>
+      <pre class="output"><code>◆  Enter Telegram bot token
+│  [여기에 토큰 붙여넣기]</code></pre>
+      <p>토큰 입력 후 Enter.</p>
+
+      <h4>5.5.4 추가 설정</h4>
+      <div class="qa">
+        <div class="qa-question">"Select a channel"</div>
+        <div class="qa-answer"><span class="badge">Finished</span> (Enter)</div>
+      </div>
+
+      <div class="qa">
+        <div class="qa-question">"Configure DM access policies now?"</div>
+        <div class="qa-answer"><span class="badge">No</span> (Enter)</div>
+      </div>
+
+      <h4>5.5.5 Workspace 설정</h4>
+      <div class="qa">
+        <div class="qa-question">"Workspace directory"</div>
+        <div class="qa-answer">기본값 수락: <code>/home/youruser/.openclaw/workspace</code> (Enter)</div>
+      </div>
+
+      <h3>5.6 설정 완료</h3>
+      <pre class="output"><code>◇  Control UI
+│  Web UI: http://127.0.0.1:18789/
+│  Gateway WS: ws://127.0.0.1:18789
+│  Gateway: reachable
+│
+└  Configure complete.</code></pre>
+
+      <h3>5.7 게이트웨이 재시작</h3>
+      <pre><code>openclaw daemon restart</code></pre>
+
+      <h3>5.8 상태 확인</h3>
+      <pre><code>openclaw status</code></pre>
+
+      <p><strong>Channels 섹션 확인:</strong></p>
+      <pre class="output"><code>Channels
+┌──────────┬─────────┬────────┬────────────────────────────────┐
+│ Channel  │ Enabled │ State  │ Detail                         │
+├──────────┼─────────┼────────┼────────────────────────────────┤
+│ Telegram │ ON      │ OK     │ token config · accounts 1/1    │
+└──────────┴─────────┴────────┴────────────────────────────────┘</code></pre>
+    </section>
+
+    <section id="step6">
+      <h2 class="green">6단계: Telegram 봇 페어링 및 테스트</h2>
+      
+      <h3>6.1 봇에게 메시지 보내기</h3>
+      <div class="card">
+        <ol>
+          <li>Telegram 앱에서 생성한 봇 검색 (예: @my_openclaw_bot)</li>
+          <li><strong>Start</strong> 버튼 클릭 또는 <code>/start</code> 입력</li>
+          <li>아무 메시지 전송 (예: "안녕하세요")</li>
+        </ol>
+      </div>
+
+      <h3>6.2 페어링 코드 확인</h3>
+      <p>봇이 페어링 코드를 응답합니다 (예: <code>X9E5XSS3</code>).</p>
+
+      <h3>6.3 페어링 승인</h3>
+      <p>Ubuntu 터미널에서:</p>
+      <pre><code>openclaw pairing approve telegram X9E5XSS3</code></pre>
+
+      <div class="alert success">
+        <div class="alert-title">성공 메시지</div>
+        <code>Approved telegram sender 1234567890.</code>
+      </div>
+
+      <h3>6.4 봇 테스트</h3>
+      <p>Telegram 앱으로 돌아가서 다시 메시지 전송.</p>
+      
+      <div class="card yellow" style="text-align: center; font-size: 1.3rem;">
+        <span class="emoji-badge">🎉</span>
+        <strong>봇이 Claude API로 응답하면 성공!</strong>
+      </div>
+    </section>
+
+    <section id="step7">
+      <h2 class="orange">7단계: 대시보드 접속 (선택사항)</h2>
+      
+      <h3>7.1 토큰이 포함된 URL 생성</h3>
+      <pre><code>openclaw dashboard</code></pre>
+
+      <p><strong>출력 예시:</strong></p>
+      <pre class="output"><code>Dashboard URL: http://127.0.0.1:18789/?token=your-gateway-token-here</code></pre>
+
+      <h3>7.2 Windows 브라우저에서 접속</h3>
+      <div class="card">
+        <ol>
+          <li>Chrome, Edge 등 브라우저 열기</li>
+          <li>출력된 URL 복사해서 주소창에 붙여넣기</li>
+          <li>Enter</li>
+        </ol>
+      </div>
+
+      <div class="card green">
+        <strong>대시보드 화면:</strong>
+        <ul>
+          <li>Health: OK (녹색)</li>
+          <li>Chat 인터페이스 사용 가능</li>
+          <li>Config, Channels, Sessions 등 메뉴 접근 가능</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="troubleshooting">
+      <h2 class="pink">문제 해결</h2>
+      
+      <h3>Gateway 연결 실패</h3>
+      <p><strong>문제:</strong></p>
+      <pre class="output"><code>gateway connect failed: Error: unauthorized: gateway token mismatch</code></pre>
+
+      <p><strong>해결:</strong></p>
+      <pre><code>openclaw doctor --fix
+openclaw daemon restart</code></pre>
+
+      <h3>Telegram 채널 상태가 OFF</h3>
+      <p><strong>확인:</strong></p>
+      <pre><code>openclaw status</code></pre>
+
+      <p><strong>재시작:</strong></p>
+      <pre><code>openclaw daemon restart</code></pre>
+
+      <h3>로그 확인</h3>
+      <p><strong>실시간 로그:</strong></p>
+      <pre><code>openclaw logs --follow</code></pre>
+      <p>종료: <code>Ctrl+C</code></p>
+
+      <p><strong>파일 로그:</strong></p>
+      <pre><code>cat /tmp/openclaw/openclaw-$(date +%Y-%m-%d).log</code></pre>
+
+      <h3>systemd 서비스 상태</h3>
+      <pre><code>systemctl --user status openclaw-gateway.service</code></pre>
+
+      <p><strong>재시작:</strong></p>
+      <pre><code>systemctl --user restart openclaw-gateway.service</code></pre>
+    </section>
+
+    <section id="reboot">
+      <h2 class="orange">Windows 재부팅 후 시작</h2>
+      <p>Windows를 껐다가 다시 켜거나 장시간 후에 몰트봇을 사용하려면:</p>
+
+      <h3>방법 1: 간단한 시작 (권장)</h3>
+
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h4>WSL Ubuntu 시작</h4>
+          <p>PowerShell 또는 Windows 터미널에서:</p>
+          <pre><code>wsl</code></pre>
+          <p>또는 시작 메뉴에서 "Ubuntu" 검색하여 실행.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h4>서비스 상태 확인</h4>
+          <pre><code>openclaw status</code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h4>서비스가 실행 중이 아니면 시작</h4>
+          <pre><code>openclaw daemon start</code></pre>
+          <p>또는 재시작:</p>
+          <pre><code>openclaw daemon restart</code></pre>
+        </div>
+      </div>
+
+      <h3>방법 2: systemd 자동 시작</h3>
+      <div class="card blue">
+        <p>설치 과정에서 systemd lingering을 활성화했기 때문에, WSL을 시작하면 게이트웨이 서비스가 <strong>자동으로 시작</strong>됩니다.</p>
+      </div>
+
+      <p><strong>확인:</strong></p>
+      <pre><code>systemctl --user status openclaw-gateway.service</code></pre>
+
+      <p>실행 중이면:</p>
+      <pre class="output"><code>● openclaw-gateway.service
+   Active: active (running)</code></pre>
+
+      <h3>방법 3: Windows 시작 시 WSL 자동 실행 (선택사항)</h3>
+      <div class="card yellow">
+        <p>WSL을 Windows 부팅 시 자동으로 시작하려면, PowerShell을 <strong>관리자 권한</strong>으로 열고:</p>
+      </div>
+
+      <pre><code># 작업 스케줄러에 WSL 자동 시작 등록
+$action = New-ScheduledTaskAction -Execute "wsl.exe" -Argument "-d Ubuntu"
+$trigger = New-ScheduledTaskTrigger -AtLogon
+$principal = New-ScheduledTaskPrincipal -UserId "$env:USERNAME" -RunLevel Highest
+Register-ScheduledTask -TaskName "WSL Auto Start" -Action $action -Trigger $trigger -Principal $principal</code></pre>
+
+      <h3>빠른 체크리스트</h3>
+      <div class="card green">
+        <table>
+          <tr>
+            <th>단계</th>
+            <th>명령어</th>
+            <th>설명</th>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td><code>wsl</code></td>
+            <td>WSL 시작</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><code>openclaw status</code></td>
+            <td>상태 확인</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>-</td>
+            <td>Channels 섹션에 Telegram이 ON, State: OK인지 확인</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><code>openclaw daemon restart</code></td>
+            <td>필요시 재시작</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>-</td>
+            <td>Telegram 앱에서 봇에게 메시지를 보내서 응답 확인</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>문제가 있을 때</h3>
+
+      <div class="alert warning">
+        <div class="alert-title">Gateway가 실행되지 않으면</div>
+        <pre><code>openclaw doctor --fix
+openclaw daemon restart</code></pre>
+      </div>
+
+      <div class="alert info">
+        <div class="alert-title">로그 확인</div>
+        <pre><code>openclaw logs --follow</code></pre>
+      </div>
+
+      <div class="alert">
+        <div class="alert-title">systemd 서비스 수동 시작</div>
+        <pre><code>systemctl --user start openclaw-gateway.service</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="purple">추가 설정</h2>
+      
+      <h3>WhatsApp 추가</h3>
+      <pre><code>openclaw configure</code></pre>
+      <div class="card">
+        <ul>
+          <li>Channels 선택</li>
+          <li>WhatsApp (QR link) 선택</li>
+          <li>QR 코드 스캔</li>
+        </ul>
+      </div>
+
+      <h3>다른 AI 모델 사용</h3>
+      <pre><code>openclaw config set agents.main.provider openai
+openclaw config set agents.main.apiKey "sk-..."</code></pre>
+
+      <h3>보안 감사</h3>
+      <pre><code>openclaw security audit --deep</code></pre>
+
+      <h3>Credentials 권한 수정</h3>
+      <pre><code>chmod 700 ~/.openclaw/credentials</code></pre>
+    </section>
+
+    <section id="commands">
+      <h2 class="yellow">유용한 명령어</h2>
+      
+      <h3>상태 확인</h3>
+      <div class="cmd-grid">
+        <div class="cmd-item">
+          <code>openclaw status</code>
+          <span>기본 상태</span>
+        </div>
+        <div class="cmd-item">
+          <code>openclaw status --all</code>
+          <span>전체 정보 (복사 가능)</span>
+        </div>
+        <div class="cmd-item">
+          <code>openclaw status --deep</code>
+          <span>채널 프로브 포함</span>
+        </div>
+      </div>
+
+      <h3>서비스 관리</h3>
+      <div class="cmd-grid">
+        <div class="cmd-item">
+          <code>openclaw daemon start</code>
+          <span>시작</span>
+        </div>
+        <div class="cmd-item">
+          <code>openclaw daemon stop</code>
+          <span>중지</span>
+        </div>
+        <div class="cmd-item">
+          <code>openclaw daemon restart</code>
+          <span>재시작</span>
+        </div>
+      </div>
+
+      <h3>설정 관리</h3>
+      <div class="cmd-grid">
+        <div class="cmd-item">
+          <code>openclaw config get &lt;key&gt;</code>
+          <span>값 조회</span>
+        </div>
+        <div class="cmd-item">
+          <code>openclaw config set &lt;key&gt; &lt;value&gt;</code>
+          <span>값 설정</span>
+        </div>
+        <div class="cmd-item">
+          <code>openclaw configure</code>
+          <span>대화형 설정</span>
+        </div>
+      </div>
+
+      <h3>페어링 관리</h3>
+      <div class="cmd-grid">
+        <div class="cmd-item">
+          <code>openclaw pairing</code>
+          <span>대기 중인 요청 확인</span>
+        </div>
+        <div class="cmd-item">
+          <code>openclaw pairing approve &lt;channel&gt; &lt;code&gt;</code>
+          <span>승인</span>
+        </div>
+        <div class="cmd-item">
+          <code>openclaw pairing list</code>
+          <span>승인된 사용자 목록</span>
+        </div>
+      </div>
+
+      <h3>진단</h3>
+      <div class="cmd-grid">
+        <div class="cmd-item">
+          <code>openclaw doctor</code>
+          <span>문제 진단</span>
+        </div>
+        <div class="cmd-item">
+          <code>openclaw doctor --fix</code>
+          <span>자동 수정</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="blue">다음 단계</h2>
+      <div class="card">
+        <ul>
+          <li><a href="https://docs.openclaw.ai/channels">채널 설정</a> - 더 많은 메시징 앱 연결</li>
+          <li><a href="https://docs.openclaw.ai/agents">에이전트 설정</a> - AI 모델 커스터마이징</li>
+          <li><a href="https://docs.openclaw.ai/skills">스킬 추가</a> - 추가 기능 활성화</li>
+          <li><a href="https://docs.openclaw.ai/security">보안 설정</a> - 접근 제어 및 allowlist</li>
+          <li><a href="https://docs.openclaw.ai/gateway/remote">원격 접속</a> - 다른 기기에서 게이트웨이 사용</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="green">참고 문서</h2>
+      <div class="specs">
+        <div class="spec-item">
+          <a href="https://docs.openclaw.ai/start/getting-started">Getting Started</a>
+        </div>
+        <div class="spec-item">
+          <a href="https://docs.openclaw.ai/platforms/windows">Windows (WSL2)</a>
+        </div>
+        <div class="spec-item">
+          <a href="https://docs.openclaw.ai/install">Install Guide</a>
+        </div>
+        <div class="spec-item">
+          <a href="https://docs.openclaw.ai/channels/telegram">Telegram Channel</a>
+        </div>
+        <div class="spec-item">
+          <a href="https://docs.openclaw.ai/start/faq">FAQ</a>
+        </div>
+        <div class="spec-item">
+          <a href="https://docs.openclaw.ai/troubleshooting">Troubleshooting</a>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>Windows 11 WSL2 OpenClaw 완전 설치 가이드</p>
+      <p>테스트 환경: Windows 11 + WSL2 + Ubuntu 24.04.2 LTS</p>
+      <div class="version">OpenClaw 2026.1.29 | 가이드 작성일: 2026-01-31</div>
+    </footer>
+  </div>
+</body>
+</html>

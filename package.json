@@ -1,0 +1,12 @@
+{
+  "name": "openclaw-multibot-guide",
+  "version": "1.0.0",
+  "description": "OpenClaw 멀티봇 가이드 - 하나의 맥미니에서 여러 에이전트 운영하기",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve . -l 3000"
+  },
+  "keywords": ["openclaw", "multibot", "telegram", "ai", "guide"],
+  "author": "VoidLight",
+  "license": "MIT"
+}

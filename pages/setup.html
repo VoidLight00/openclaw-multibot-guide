@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2. 사전 준비 - OpenClaw 멀티봇 가이드</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="../index.html" class="sidebar-logo">[CLAW] OpenClaw <span>Guide</span></a>
+      <nav>
+        <ul class="sidebar-nav"><li><a href="../index.html">시작하기</a></li></ul>
+        <div class="sidebar-section">가이드</div>
+        <ul class="sidebar-nav">
+          <li><a href="intro.html">1. 개요</a></li>
+          <li><a href="setup.html" class="active">2. 사전 준비</a></li>
+          <li><a href="models.html">3. AI 모델 설정</a></li>
+          <li><a href="workspace.html">4. Workspace 구조</a></li>
+          <li><a href="config.html">5. Config 설정</a></li>
+          <li><a href="run.html">6. 실행 & 테스트</a></li>
+        </ul>
+        <div class="sidebar-section">실전</div>
+        <ul class="sidebar-nav">
+          <li><a href="examples.html">활용 예시</a></li>
+          <li><a href="troubleshooting.html">트러블슈팅</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <h1>2. 사전 준비</h1>
+      <p class="lead">
+        OpenClaw 설치와 텔레그램 봇 생성까지. 
+        멀티봇 설정을 위한 기초 작업을 완료합니다.
+      </p>
+
+      <h2>[LIST] 필요한 것</h2>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>항목</th>
+            <th>요구사항</th>
+            <th>확인</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Mac Mini (또는 macOS)</td>
+            <td>macOS 12.0+, 16GB+ RAM 권장</td>
+            <td>[ ]</td>
+          </tr>
+          <tr>
+            <td>Node.js</td>
+            <td>v22.0.0 이상</td>
+            <td>[ ]</td>
+          </tr>
+          <tr>
+            <td>텔레그램 계정</td>
+            <td>봇 생성용</td>
+            <td>[ ]</td>
+          </tr>
+          <tr>
+            <td>AI 계정</td>
+            <td>Anthropic, Google, OpenAI 중 하나 이상</td>
+            <td>[ ]</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>[1] Node.js 설치</h2>
+      
+      <p>OpenClaw는 Node.js 22 이상이 필요합니다.</p>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># 버전 확인
+node --version
+# v22.0.0 이상이어야 함
+
+# 설치 안 됐으면 Homebrew로 설치
+brew install node
+
+# 또는 nvm 사용
+nvm install 22
+nvm use 22</code></pre>
+
+      <h2>[2] OpenClaw 설치</h2>
+      
+      <div class="steps">
+        <div class="step">
+          <h4>npm으로 전역 설치</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>npm install -g openclaw</code></pre>
+          <p>또는 공식 설치 스크립트:</p>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>curl -fsSL https://openclaw.bot/install.sh | bash
+source ~/.zshrc</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>설치 확인</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>openclaw --version
+# OpenClaw 2026.2.1 (또는 그 이상)</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>초기 설정 마법사 실행</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>openclaw setup</code></pre>
+          <p>대화형으로 기본 설정을 완료합니다.</p>
+        </div>
+      </div>
+
+      <h3>[MIGRATE] 기존 사용자 마이그레이션</h3>
+      
+      <p>Clawdbot 또는 Moltbot에서 업그레이드하는 경우:</p>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># 기존 버전 제거
+npm uninstall -g moltbot
+# 또는
+npm uninstall -g clawdbot
+
+# OpenClaw 설치
+npm install -g openclaw
+
+# 자동 마이그레이션
+openclaw migrate
+
+# 수동 마이그레이션 (필요시)
+mv ~/.moltbot ~/.openclaw
+# 또는
+mv ~/.clawdbot ~/.openclaw</code></pre>
+
+      <h2>[3] 텔레그램 봇 생성</h2>
+      
+      <p>에이전트 수만큼 봇을 생성해야 합니다. 3개 에이전트라면 3개 봇!</p>
+
+      <div class="alert alert-info">
+        <div class="alert-title">[i] BotFather란?</div>
+        <p>텔레그램의 공식 봇 관리 봇입니다. 웹사이트가 아니라 <strong>텔레그램 앱 안에서 대화</strong>로 봇을 생성합니다.</p>
+      </div>
+
+      <h3>BotFather 전체 흐름 (5단계)</h3>
+
+      <div class="steps">
+        <div class="step">
+          <h4>BotFather 찾기</h4>
+          <p>텔레그램 앱 상단 검색창에서 <code>@BotFather</code> 검색 → 클릭해서 채팅 시작</p>
+        </div>
+        
+        <div class="step">
+          <h4>새 봇 생성 명령</h4>
+          <div class="code-header">
+            <span>BotFather에게 보내는 메시지</span>
+          </div>
+          <pre><code>/newbot</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>봇 이름 입력</h4>
+          <p>BotFather가 "봇 이름?"이라고 물으면:</p>
+          <div class="code-header">
+            <span>예시</span>
+          </div>
+          <pre><code>My Assistant Bot</code></pre>
+          <p>자유롭게 원하는 이름 입력</p>
+        </div>
+        
+        <div class="step">
+          <h4>봇 username 입력</h4>
+          <div class="alert alert-warning">
+            <div class="alert-title">[!] 중요</div>
+            <p>반드시 <code>_bot</code> 또는 <code>Bot</code>으로 끝나야 합니다!</p>
+          </div>
+          <div class="code-header">
+            <span>예시</span>
+          </div>
+          <pre><code>my_assistant_bot</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>토큰 저장</h4>
+          <p>BotFather가 토큰을 알려줍니다:</p>
+          <div class="code-header">
+            <span>토큰 형식</span>
+          </div>
+          <pre><code>1234567890:ABCdefGhIJKlmnOPQrstUVwxyz</code></pre>
+          <div class="alert alert-warning">
+            <div class="alert-title">[!] 토큰 보안</div>
+            <p>봇 토큰은 절대 공개하면 안 됩니다! 노출되면 <code>/revoke</code>로 즉시 재발급하세요.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>실제 BotFather 대화 예시</h3>
+      
+      <div class="code-header">
+        <span>BotFather 대화</span>
+      </div>
+      <pre><code># 내가 보내는 메시지
+/newbot
+
+# BotFather 응답:
+"Alright, a new bot. How are we going to call it?
+Please choose a name for your bot."
+
+# 내가 보내는 메시지 (봇 표시 이름)
+My Belphegor
+
+# BotFather 응답:
+"Good. Now let's choose a username for your bot.
+It must end in 'bot'. Like this, for example: TetrisBot"
+
+# 내가 보내는 메시지 (고유 username)
+belphegor_bot
+
+# BotFather 응답:
+"Done! Congratulations on your new bot."
+Use this token to access the HTTP API:
+1234567890:ABCdefGhIJKlmnOPQrstUVwxyz  <-- 이게 토큰!</code></pre>
+
+      <h3>3개 봇 예시</h3>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>에이전트</th>
+            <th>봇 이름</th>
+            <th>Username</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>벨페고르</td>
+            <td>Belphegor</td>
+            <td>@belphegor_bot</td>
+          </tr>
+          <tr>
+            <td>마몬</td>
+            <td>Mammon</td>
+            <td>@mammon_bot</td>
+          </tr>
+          <tr>
+            <td>아스모데우스</td>
+            <td>Asmodeus</td>
+            <td>@asmodeus_bot</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>[4] 봇 Privacy Mode 설정 (그룹 사용 시)</h2>
+      
+      <p>그룹에서 봇을 사용하려면 Privacy Mode를 비활성화해야 합니다.</p>
+
+      <h3>방법 1: Privacy Mode 비활성화 (BotFather)</h3>
+      
+      <div class="code-header">
+        <span>BotFather에게</span>
+      </div>
+      <pre><code>/setprivacy
+→ 봇 선택 (버튼 클릭)
+→ Disable 버튼 클릭
+
+# 성공 메시지
+"Success! The new status is: DISABLED."</code></pre>
+
+      <div class="alert alert-info">
+        <div class="alert-title">[i] 그룹 재추가 필요</div>
+        <p>Privacy Mode 변경 후에는 봇을 그룹에서 제거했다가 다시 추가해야 적용됩니다.</p>
+      </div>
+
+      <h3>방법 2: 봇을 그룹 관리자로 추가 (대안)</h3>
+      
+      <p>Privacy Mode 비활성화 없이도, 봇을 그룹 관리자로 지정하면 모든 메시지를 받을 수 있습니다.</p>
+      
+      <ol>
+        <li>그룹 채팅방 열기</li>
+        <li>그룹 이름 클릭 → 그룹 정보</li>
+        <li>멤버 목록에서 봇 찾기 → 클릭</li>
+        <li>"관리자로 승격" 선택</li>
+      </ol>
+
+      <table>
+        <thead>
+          <tr>
+            <th>방법</th>
+            <th>적용 범위</th>
+            <th>설정 위치</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>방법 1 (Privacy Mode)</td>
+            <td>모든 그룹에 일괄 적용</td>
+            <td>BotFather</td>
+          </tr>
+          <tr>
+            <td>방법 2 (관리자)</td>
+            <td>그룹별 개별 설정</td>
+            <td>그룹 내</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>[5] API 키 준비</h2>
+
+      <div class="alert alert-warning">
+        <div class="alert-title">[!] Claude 구독 사용 경고</div>
+        <p><strong>Claude Pro/Max 구독 계정</strong>을 OpenClaw에 연동하면 <strong>계정 정지 위험</strong>이 있습니다. 
+        자동화 툴 사용이 이용약관에 위반될 수 있습니다.</p>
+        <p><strong>권장:</strong> API Key 방식 사용 (Anthropic Console에서 발급)</p>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>제공자</th>
+            <th>API 키 발급처</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Anthropic (Claude)</td>
+            <td><a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a></td>
+          </tr>
+          <tr>
+            <td>Google (Gemini)</td>
+            <td><a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> (무료)</td>
+          </tr>
+          <tr>
+            <td>OpenAI (GPT)</td>
+            <td><a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>[CHECK] 체크리스트</h2>
+      
+      <div class="card">
+        <p>[ ] Node.js v22+ 설치됨</p>
+        <p>[ ] OpenClaw 설치됨 (<code>openclaw --version</code> 확인)</p>
+        <p>[ ] 텔레그램 봇 N개 생성됨</p>
+        <p>[ ] 각 봇의 토큰 안전하게 저장됨</p>
+        <p>[ ] AI API 키 준비됨 (최소 1개)</p>
+      </div>
+
+      <div class="page-nav">
+        <a href="intro.html">
+          <span class="page-nav-label">이전</span>
+          <span class="page-nav-title">← 1. 개요</span>
+        </a>
+        <a href="models.html" class="page-nav-next">
+          <span class="page-nav-label">다음</span>
+          <span class="page-nav-title">3. AI 모델 설정 →</span>
+        </a>
+      </div>
+    </main>
+  </div>
+  <script src="../js/main.js"></script>
+</body>
+</html>

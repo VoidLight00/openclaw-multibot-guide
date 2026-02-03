@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>활용 예시 - OpenClaw 멀티봇 가이드</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="../index.html" class="sidebar-logo">[CLAW] OpenClaw <span>Guide</span></a>
+      <nav>
+        <ul class="sidebar-nav"><li><a href="../index.html">시작하기</a></li></ul>
+        <div class="sidebar-section">가이드</div>
+        <ul class="sidebar-nav">
+          <li><a href="intro.html">1. 개요</a></li>
+          <li><a href="setup.html">2. 사전 준비</a></li>
+          <li><a href="models.html">3. AI 모델 설정</a></li>
+          <li><a href="workspace.html">4. Workspace 구조</a></li>
+          <li><a href="config.html">5. Config 설정</a></li>
+          <li><a href="run.html">6. 실행 & 테스트</a></li>
+        </ul>
+        <div class="sidebar-section">실전</div>
+        <ul class="sidebar-nav">
+          <li><a href="examples.html" class="active">활용 예시</a></li>
+          <li><a href="troubleshooting.html">트러블슈팅</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <h1>활용 예시</h1>
+      <p class="lead">
+        실제로 멀티봇을 어떻게 활용할 수 있을까요? 
+        다양한 구성 예시와 사용 시나리오를 소개합니다.
+      </p>
+
+      <h2>[MASK] 예시 1: 악마 삼총사</h2>
+      
+      <p>각기 다른 성격의 악마 컨셉 에이전트 3명</p>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4> 벨페고르</h4>
+          <p><span class="badge">Claude Opus</span></p>
+          <ul>
+            <li><strong>역할:</strong> 트레이딩, 복잡한 분석</li>
+            <li><strong>성격:</strong> 나태하지만 일할 땐 제대로</li>
+            <li><strong>말투:</strong> 직설적, 반말</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>[MONEY] 마몬</h4>
+          <p><span class="badge badge-success">Gemini Flash</span></p>
+          <ul>
+            <li><strong>역할:</strong> 리마인더, 일정 관리</li>
+            <li><strong>성격:</strong> 효율 집착, 잔소리</li>
+            <li><strong>말투:</strong> 친절하지만 간결</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4> 아스모데우스</h4>
+          <p><span class="badge badge-success">Gemini Flash</span></p>
+          <ul>
+            <li><strong>역할:</strong> 코딩, 개발</li>
+            <li><strong>성격:</strong> 꼼꼼, 기술 오타쿠</li>
+            <li><strong>말투:</strong> 전문적, 상세 설명</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>[WORK] 예시 2: 업무 분리형</h2>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>에이전트</th>
+            <th>담당</th>
+            <th>모델</th>
+            <th>사용 시간</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Work Bot</td>
+            <td>업무 관련 질문</td>
+            <td>Claude Sonnet</td>
+            <td>평일 9-18시</td>
+          </tr>
+          <tr>
+            <td>Life Bot</td>
+            <td>일상, 취미</td>
+            <td>Gemini Flash</td>
+            <td>항상</td>
+          </tr>
+          <tr>
+            <td>Code Bot</td>
+            <td>개발 전용</td>
+            <td>Claude Sonnet</td>
+            <td>필요 시</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>[i] 예시 3: 모델 티어링</h2>
+      
+      <p>비용 최적화를 위한 모델 분리</p>
+
+      <div class="card">
+        <h4>구성</h4>
+        <ul>
+          <li><strong>Premium Bot</strong> (GPT-4 / Claude Opus) - 중요한 분석, 복잡한 작업</li>
+          <li><strong>Standard Bot</strong> (Claude Sonnet) - 일반 대화, 작업</li>
+          <li><strong>Quick Bot</strong> (Gemini Flash) - 간단한 질문, 빠른 응답</li>
+        </ul>
+      </div>
+
+      <div class="code-header">
+        <span>Config 예시</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>{
+  "agents": {
+    "list": [
+      {
+        "id": "premium",
+        "workspace": "~/.openclaw/workspace-premium",
+        "model": { "primary": "anthropic/claude-opus-4-5" }
+      },
+      {
+        "id": "standard",
+        "workspace": "~/.openclaw/workspace-standard",
+        "model": { "primary": "anthropic/claude-sonnet-4-5" }
+      },
+      {
+        "id": "quick",
+        "workspace": "~/.openclaw/workspace-quick",
+        "model": { "primary": "google/gemini-2.0-flash" }
+      }
+    ]
+  }
+}</code></pre>
+
+      <h2>[HOME] 예시 4: 가족 공유</h2>
+      
+      <p>가족 구성원별 전용 봇</p>
+
+      <div class="alert alert-info">
+        <div class="alert-title">[i] 활용법</div>
+        <p>각 가족 구성원이 자신만의 봇과 대화. USER.md에 각 사람의 정보를 설정하면 
+        개인화된 응답이 가능합니다.</p>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>봇</th>
+            <th>사용자</th>
+            <th>특화 기능</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>@dad_assistant_bot</td>
+            <td>아빠</td>
+            <td>뉴스, 스포츠, 업무</td>
+          </tr>
+          <tr>
+            <td>@mom_assistant_bot</td>
+            <td>엄마</td>
+            <td>요리, 쇼핑, 일정</td>
+          </tr>
+          <tr>
+            <td>@kid_assistant_bot</td>
+            <td>아이</td>
+            <td>숙제 도움, 퀴즈 (필터링 강화)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>[QUICK] 고급 팁</h2>
+
+      <h3>에이전트 간 통신</h3>
+      
+      <p>에이전트끼리 메시지를 주고받을 수 있습니다.</p>
+      
+      <div class="code-header">
+        <span>SOUL.md에서 설정</span>
+      </div>
+      <pre><code>## 다른 에이전트 호출
+복잡한 코딩 작업은 아스모데우스에게 위임할 수 있다.
+sessions_send로 작업을 전달하고 결과를 받아온다.</code></pre>
+
+      <h3>공유 메모리</h3>
+      
+      <p>옵시디언 같은 공유 볼트를 여러 에이전트가 접근:</p>
+      
+      <div class="code-header">
+        <span>각 에이전트의 TOOLS.md</span>
+      </div>
+      <pre><code>## 공유 볼트
+경로: /Users/username/Obsidian/SharedVault/
+
+이 볼트는 모든 에이전트가 접근 가능.
+- 벨페고르: 트레이딩 일지
+- 마몬: 할 일 목록
+- 아스모데우스: 개발 노트</code></pre>
+
+      <h3>시간대별 모델 전환</h3>
+      
+      <p>HEARTBEAT.md와 cron을 활용해 시간대별로 모델을 전환할 수 있습니다.</p>
+      
+      <div class="code-header">
+        <span>아이디어</span>
+      </div>
+      <pre><code># HEARTBEAT.md
+## 모델 전환 규칙
+- 업무 시간 (9-18시): Opus 사용
+- 그 외 시간: Sonnet 사용
+- 심야 (0-6시): Flash만 사용 (비용 절감)</code></pre>
+
+      <h2>[CHART] 비용 추정</h2>
+      
+      <p>3개 에이전트 운영 시 예상 비용 (활발한 사용 기준)</p>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>모델</th>
+            <th>일 사용량</th>
+            <th>월 예상 비용</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Claude Opus</td>
+            <td>~50K tokens</td>
+            <td>~$30-50</td>
+          </tr>
+          <tr>
+            <td>Claude Sonnet</td>
+            <td>~100K tokens</td>
+            <td>~$10-20</td>
+          </tr>
+          <tr>
+            <td>Gemini Flash</td>
+            <td>~200K tokens</td>
+            <td>무료 (제한 내)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-success">
+        <div class="alert-title">[i] 비용 절감 팁</div>
+        <p>간단한 작업은 Gemini Flash에 맡기고, 복잡한 작업만 Opus/Sonnet을 사용하면 
+        비용을 크게 줄일 수 있습니다.</p>
+      </div>
+
+      <div class="page-nav">
+        <a href="run.html">
+          <span class="page-nav-label">이전</span>
+          <span class="page-nav-title">← 6. 실행 & 테스트</span>
+        </a>
+        <a href="troubleshooting.html" class="page-nav-next">
+          <span class="page-nav-label">다음</span>
+          <span class="page-nav-title">트러블슈팅 →</span>
+        </a>
+      </div>
+    </main>
+  </div>
+  <script src="../js/main.js"></script>
+</body>
+</html>

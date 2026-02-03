@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4. Workspace 구조 - OpenClaw 멀티봇 가이드</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="../index.html" class="sidebar-logo">[CLAW] OpenClaw <span>Guide</span></a>
+      <nav>
+        <ul class="sidebar-nav"><li><a href="../index.html">시작하기</a></li></ul>
+        <div class="sidebar-section">가이드</div>
+        <ul class="sidebar-nav">
+          <li><a href="intro.html">1. 개요</a></li>
+          <li><a href="setup.html">2. 사전 준비</a></li>
+          <li><a href="models.html">3. AI 모델 설정</a></li>
+          <li><a href="workspace.html" class="active">4. Workspace 구조</a></li>
+          <li><a href="config.html">5. Config 설정</a></li>
+          <li><a href="run.html">6. 실행 & 테스트</a></li>
+        </ul>
+        <div class="sidebar-section">실전</div>
+        <ul class="sidebar-nav">
+          <li><a href="examples.html">활용 예시</a></li>
+          <li><a href="troubleshooting.html">트러블슈팅</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <h1>4. Workspace 구조</h1>
+      <p class="lead">
+        각 에이전트의 독립적인 작업 공간을 설정합니다.
+        파일 구조, Memory 시스템, Skills까지 완벽히 이해합니다.
+      </p>
+
+      <h2>[DIR] Workspace란?</h2>
+      
+      <p>Workspace는 에이전트의 "집"입니다. 설정, 메모리, 도구 등 에이전트가 필요한 모든 것이 여기에 있습니다.</p>
+
+      <div class="alert alert-info">
+        <div class="alert-title">[i] 핵심 원칙</div>
+        <p><strong>"파일이 진실의 원천(Source of Truth)"</strong> - 모델은 디스크에 저장된 것만 기억합니다. 
+        대화 세션이 끝나거나 컴팩션되면, 파일에 저장되지 않은 정보는 사라집니다.</p>
+      </div>
+
+      <div class="code-header">
+        <span>기본 Workspace 구조</span>
+      </div>
+      <pre><code>~/agent-workspace/
+├── AGENTS.md        # 에이전트 행동 규칙
+├── SOUL.md          # 성격, 페르소나
+├── IDENTITY.md      # 이름, 이모지 등 기본 정보
+├── USER.md          # 사용자 정보
+├── MEMORY.md        # [LAYER 1] 장기 기억
+├── TOOLS.md         # 도구 설정 메모
+├── HEARTBEAT.md     # 주기적 체크 항목
+├── BOOTSTRAP.md     # 초기화 프롬프트 (첫 실행 후 삭제)
+├── memory/          # [LAYER 2] 일일 로그
+│   ├── 2026-01-31.md
+│   ├── 2026-02-01.md
+│   └── ...
+├── skills/          # 워크스페이스 전용 Skills
+└── canvas/          # 작업 디렉토리</code></pre>
+
+      <h2>[MEMORY] 2레이어 메모리 시스템</h2>
+      
+      <p>OpenClaw의 Memory는 2개 레이어로 구성됩니다.</p>
+
+      <div class="code-header">
+        <span>Memory 아키텍처</span>
+      </div>
+      <pre><code>┌─────────────────────────────────────────────────────────────┐
+│                   OpenClaw Memory System                    │
+├─────────────────────────────────────────────────────────────┤
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │              Layer 1: MEMORY.md                       │  │
+│  │  • 장기 기억 (Long-term Memory)                       │  │
+│  │  • 결정사항, 선호도, 지속적 사실                      │  │
+│  │  • 개인 세션에서만 로드 (그룹 제외)                   │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                          ▲                                  │
+│                          │ 중요 정보 승격                   │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │         Layer 2: memory/YYYY-MM-DD.md                 │  │
+│  │  • 일일 로그 (Daily Log)                              │  │
+│  │  • 추가 전용 (Append-only)                            │  │
+│  │  • 세션 시작 시 오늘+어제 데이터 로드                 │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+      <table>
+        <thead>
+          <tr>
+            <th>레이어</th>
+            <th>저장 내용</th>
+            <th>로드 시점</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>MEMORY.md</td>
+            <td>결정사항, 선호도, 지속적 사실</td>
+            <td>개인 세션 시작 시 (그룹 제외)</td>
+          </tr>
+          <tr>
+            <td>memory/YYYY-MM-DD.md</td>
+            <td>일상 노트, 실행 컨텍스트</td>
+            <td>오늘 + 어제 데이터</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-warning">
+        <div class="alert-title">[!] 보안 주의</div>
+        <p>MEMORY.md에는 민감한 정보가 포함될 수 있습니다. 
+        그룹 채팅(Discord, Slack 등)에서는 자동으로 로드되지 않습니다.</p>
+      </div>
+
+      <h2>[FILE] 핵심 파일 설명</h2>
+
+      <h3>AGENTS.md - 행동 규칙</h3>
+      
+      <p>에이전트가 어떻게 행동해야 하는지 정의합니다.</p>
+      
+      <div class="card">
+        <h4>포함 내용</h4>
+        <ul>
+          <li>세션 시작 시 할 일</li>
+          <li>메모리 관리 방법</li>
+          <li>안전 규칙</li>
+          <li>외부 vs 내부 작업 구분</li>
+          <li>Heartbeat 동작</li>
+        </ul>
+      </div>
+
+      <h3>SOUL.md - 페르소나</h3>
+      
+      <p>에이전트의 성격과 말투를 정의합니다. <strong>에이전트마다 다르게 설정하세요!</strong></p>
+      
+      <div class="code-header">
+        <span>SOUL.md 예시 (벨페고르)</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># SOUL.md - 벨페고르
+
+## 정체성
+- 이름: 벨페고르
+- 컨셉: 나태의 악마 (하지만 일할 땐 제대로)
+- 말투: 편하고 직설적, 반말
+
+## 성격
+- 효율 중시 (불필요한 말 싫어함)
+- 유머 있음
+- 솔직함
+
+## 규칙
+- 인사치레 생략
+- 핵심만 말하기
+- 이모지 적당히 사용</code></pre>
+
+      <div class="code-header">
+        <span>SOUL.md 예시 (마몬)</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># SOUL.md - 마몬
+
+## 정체성
+- 이름: 마몬
+- 컨셉: 탐욕의 악마 (효율과 생산성 집착)
+- 말투: 친절하지만 간결
+
+## 역할
+- 리마인더/일정 관리 전문
+- 할 일 추적
+- 시간 관리 조언
+
+## 규칙
+- 마감 강조
+- 잔소리 적당히
+- 칭찬도 함</code></pre>
+
+      <h3>IDENTITY.md - 기본 정보</h3>
+      
+      <div class="code-header">
+        <span>IDENTITY.md 예시</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># IDENTITY.md
+
+- **Name:** 벨페고르 (Belphegor)
+- **Creature:** AI 에이전트 (나태의 악마 컨셉)
+- **Vibe:** 편하고 직설적
+- **Emoji:** (선택)</code></pre>
+
+      <h3>USER.md - 사용자 정보</h3>
+      
+      <div class="code-header">
+        <span>USER.md 예시</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># USER.md
+
+- **Name:** 상현
+- **What to call them:** 현
+- **Timezone:** Asia/Seoul (GMT+9)
+- **Notes:** Prefers Korean</code></pre>
+
+      <h3>MEMORY.md - 장기 기억</h3>
+      
+      <div class="code-header">
+        <span>MEMORY.md 예시</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># MEMORY.md
+
+## 사용자 프로필
+- 이름: 홍길동
+- 직업: 소프트웨어 엔지니어
+- 선호 언어: 한국어 (기술 문서는 영어 OK)
+
+## 프로젝트 컨텍스트
+### 현재 진행 중
+- AI 블로그 시리즈 작성 중
+
+## 선호도 및 결정사항
+### 코딩 스타일
+- Python: Black 포매터 사용
+- 타입 힌트 필수
+
+### 커뮤니케이션
+- 간결한 답변 선호
+- 확실하지 않으면 "추정"임을 명시</code></pre>
+
+      <h3>무엇을 어디에 기록해야 하는가?</h3>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>분류</th>
+            <th>MEMORY.md (장기)</th>
+            <th>Daily Log (일일)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>[OK]</td>
+            <td>영구적인 선호도, 중요한 결정, 자주 참조하는 정보</td>
+            <td>오늘 진행한 작업, 임시 메모, 디버깅 과정</td>
+          </tr>
+          <tr>
+            <td>[X]</td>
+            <td>일시적인 정보, 민감한 자격증명</td>
+            <td>영구 보관할 결정사항</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>[SKILL] Skills 시스템</h2>
+      
+      <p>Skills는 에이전트에게 새로운 능력을 부여하는 모듈화된 확장 시스템입니다.</p>
+
+      <h3>Skills 로딩 우선순위</h3>
+      
+      <ol>
+        <li><strong>워크스페이스 Skills (최우선)</strong>: <code>/skills/</code> 또는 <code>/.openclaw/skills/</code></li>
+        <li><strong>로컬 Skills</strong>: <code>~/.openclaw/skills/</code></li>
+        <li><strong>번들 Skills</strong>: OpenClaw에 기본 포함된 Skills</li>
+      </ol>
+
+      <h3>ClawdHub - Skills 마켓플레이스</h3>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># ClawdHub CLI 설치
+npm i -g clawdhub
+
+# Skills 검색
+clawdhub search "github automation"
+
+# Skill 설치
+clawdhub install github-pr
+
+# 설치된 Skills 확인
+clawdhub list</code></pre>
+
+      <h3>인기 번들 Skills</h3>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>카테고리</th>
+            <th>Skills</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Apple 생태계</td>
+            <td>Notes, Reminders, Things 3, Bear Notes</td>
+          </tr>
+          <tr>
+            <td>Google Workspace</td>
+            <td>Gmail, Calendar, Drive, Docs, Sheets</td>
+          </tr>
+          <tr>
+            <td>스마트홈</td>
+            <td>Philips Hue, Sonos, Eight Sleep</td>
+          </tr>
+          <tr>
+            <td>개발 도구</td>
+            <td>GitHub CLI, coding-agent, Whisper</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># 사용 가능한 번들 Skills 확인
+openclaw skills list</code></pre>
+
+      <h2>[TOOL] Workspace 생성</h2>
+
+      <div class="steps">
+        <div class="step">
+          <h4>디렉토리 생성</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code># 에이전트별 workspace 생성
+mkdir -p ~/belphegor ~/mammon ~/asmodeus
+
+# 또는 .openclaw 아래에
+mkdir -p ~/.openclaw/workspace-{belphegor,mammon,asmodeus}</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>기본 파일 복사</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code># 기존 workspace에서 공통 파일 복사
+cp ~/clawd/AGENTS.md ~/mammon/
+cp ~/clawd/USER.md ~/mammon/
+cp ~/clawd/TOOLS.md ~/mammon/</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>에이전트별 커스터마이징</h4>
+          <p>SOUL.md, IDENTITY.md는 에이전트마다 다르게 작성!</p>
+        </div>
+        
+        <div class="step">
+          <h4>memory 폴더 생성</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>mkdir -p ~/mammon/memory
+mkdir -p ~/asmodeus/memory</code></pre>
+        </div>
+      </div>
+
+      <h2>[SHARE] 공유 자원</h2>
+      
+      <p>옵시디언 볼트 같은 자원을 여러 에이전트가 공유할 수 있습니다.</p>
+
+      <div class="code-header">
+        <span>TOOLS.md에서 공유 경로 설정</span>
+      </div>
+      <pre><code># TOOLS.md
+
+## 옵시디언 볼트
+경로: /Users/username/Obsidian/Vault/
+
+## 공유 규칙
+- 읽기: 모든 에이전트 가능
+- 쓰기: 지정된 폴더만</code></pre>
+
+      <h2>[CHECK] 체크리스트</h2>
+      
+      <div class="card">
+        <p>[ ] 에이전트 수만큼 workspace 디렉토리 생성</p>
+        <p>[ ] 각 workspace에 AGENTS.md, USER.md 복사</p>
+        <p>[ ] 에이전트별 SOUL.md, IDENTITY.md 작성</p>
+        <p>[ ] memory/ 폴더 생성</p>
+        <p>[ ] MEMORY.md 초기화 (빈 파일 또는 기본 구조)</p>
+      </div>
+
+      <div class="page-nav">
+        <a href="models.html">
+          <span class="page-nav-label">이전</span>
+          <span class="page-nav-title">← 3. AI 모델 설정</span>
+        </a>
+        <a href="config.html" class="page-nav-next">
+          <span class="page-nav-label">다음</span>
+          <span class="page-nav-title">5. Config 설정 →</span>
+        </a>
+      </div>
+    </main>
+  </div>
+  <script src="../js/main.js"></script>
+</body>
+</html>
