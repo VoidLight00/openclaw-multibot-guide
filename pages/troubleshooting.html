@@ -295,6 +295,117 @@ openclaw gateway
 openclaw logs --tail 200</code></pre>
       </div>
 
+      <h2>[X] 메모리/Workspace 문제</h2>
+
+      <h3>봇 추가 후 기존 봇이 기억을 잃음</h3>
+      
+      <div class="card">
+        <h4>증상</h4>
+        <ul>
+          <li>새 봇 추가 후 기존 봇이 "누구세요?" 반응</li>
+          <li>에이전트가 MEMORY.md, IDENTITY.md를 못 찾음</li>
+          <li>"처음 봬요" 등의 반응</li>
+        </ul>
+        
+        <h4>원인</h4>
+        <p><strong>Config 수정 중 기존 에이전트의 workspace 경로가 변경됨</strong></p>
+        <p>예: <code>/Users/sanghyeon/clawd</code> → <code>~/.openclaw/workspace-belphegor</code></p>
+        <p>경로가 바뀌면 에이전트가 원래 메모리 파일을 찾을 수 없음</p>
+        
+        <h4>진단</h4>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code># 현재 설정된 workspace 경로 확인
+cat ~/.openclaw/openclaw.json | grep -A2 '"list"'
+
+# 원래 workspace 폴더가 있는지 확인
+ls -la /원래/경로/MEMORY.md
+ls -la ~/.openclaw/workspace-*/</code></pre>
+
+        <h4>해결</h4>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code># 1. Config 백업이 있으면 복구
+cp ~/.openclaw/openclaw.json.bak ~/.openclaw/openclaw.json
+
+# 2. 없으면 직접 수정 - workspace 경로를 원래대로
+# openclaw dashboard에서 Raw 모드로 편집
+# 또는 에이전트에게 요청:
+# "belphegor의 workspace를 /Users/sanghyeon/clawd로 수정해줘"
+
+# 3. Gateway 재시작
+openclaw gateway restart</code></pre>
+      </div>
+
+      <h3>예방법: 봇 추가 전 필수 작업</h3>
+      
+      <div class="card">
+        <h4>1. Config 백업</h4>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code>cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak</code></pre>
+
+        <h4>2. 기존 경로 기록</h4>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code># 현재 에이전트들의 workspace 경로 확인 및 메모
+cat ~/.openclaw/openclaw.json | grep -B1 -A1 workspace</code></pre>
+
+        <h4>3. 에이전트에게 명시적 지시</h4>
+        <p>봇 추가 요청 시 기존 경로를 명시:</p>
+        <div class="code-header">
+          <span>에이전트에게 보내는 메시지</span>
+        </div>
+        <pre><code># 기존 에이전트 (경로 유지!)
+# - belphegor: /Users/sanghyeon/clawd
+# - mammon: ~/.openclaw/workspace-mammon
+
+# 새로 추가할 에이전트
+new_agent:
+  id: "newbot"
+  workspace: "~/.openclaw/workspace-newbot"
+  ...
+
+# 기존 에이전트의 workspace 경로를 절대 변경하지 말고 추가해줘</code></pre>
+
+        <h4>4. 변경 후 검증</h4>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code># 기존 경로가 유지됐는지 확인
+cat ~/.openclaw/openclaw.json | grep workspace
+
+# 문제 있으면 백업에서 복구
+cp ~/.openclaw/openclaw.json.bak ~/.openclaw/openclaw.json</code></pre>
+      </div>
+
+      <h3>Workspace 폴더 직접 확인</h3>
+      
+      <div class="card">
+        <h4>파일이 어디 있는지 찾기</h4>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code># 모든 MEMORY.md 파일 찾기
+find ~ -name "MEMORY.md" -type f 2>/dev/null
+
+# OpenClaw 관련 workspace 찾기
+ls -la ~/.openclaw/workspace-*
+ls -la ~/clawd  # 커스텀 경로</code></pre>
+        
+        <p>파일을 찾았으면 Config의 workspace 경로를 해당 위치로 수정</p>
+      </div>
+
       <h2>[FIX] 일반적인 해결 순서</h2>
       
       <p>문제가 발생하면 이 순서로 시도:</p>

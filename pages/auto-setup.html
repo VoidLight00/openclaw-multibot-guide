@@ -236,14 +236,108 @@ new_agent:
 # 4. Gateway 재시작
 # 5. 결과 보고</code></pre>
 
+      <div class="alert alert-danger">
+        <div class="alert-title">[!!] 메모리 손실 주의</div>
+        <p><strong>봇 추가 시 기존 봇의 메모리가 날아갈 수 있습니다!</strong></p>
+        <p>원인: Config 수정 중 기존 에이전트의 workspace 경로가 변경되면 메모리 파일을 찾을 수 없게 됨</p>
+      </div>
+
       <div class="alert alert-warning">
-        <div class="alert-title">[!] 추가 시 주의사항</div>
+        <div class="alert-title">[!] 추가 시 필수 체크리스트</div>
         <ul>
-          <li><strong>기존 설정 보존</strong>: 새 에이전트만 추가, 기존 설정 건드리지 말 것</li>
+          <li><strong>Config 백업 필수</strong>: 수정 전 <code>cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak</code></li>
+          <li><strong>기존 workspace 경로 확인</strong>: 기존 에이전트들의 경로가 바뀌지 않았는지 확인</li>
           <li><strong>ID 중복 확인</strong>: 기존 에이전트와 같은 ID 사용 금지</li>
           <li><strong>토큰 필수</strong>: BotFather에서 새 봇 먼저 생성</li>
         </ul>
       </div>
+
+      <h3>안전한 봇 추가 절차</h3>
+
+      <div class="steps">
+        <div class="step">
+          <h4>1단계: 현재 Config 백업</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak
+cat ~/.openclaw/openclaw.json | grep -A5 '"list"'  # 기존 경로 확인</code></pre>
+        </div>
+
+        <div class="step">
+          <h4>2단계: 기존 에이전트 경로 메모</h4>
+          <p>반드시 기존 에이전트들의 workspace 경로를 기록해두세요:</p>
+          <div class="code-header">
+            <span>예시</span>
+          </div>
+          <pre><code>agent1: /Users/sanghyeon/clawd          (절대경로)
+agent2: ~/.openclaw/workspace-agent2    (틸드경로)</code></pre>
+        </div>
+
+        <div class="step">
+          <h4>3단계: 에이전트에게 명시적 지시</h4>
+          <p>템플릿에 기존 에이전트 정보를 포함시켜서 덮어쓰기 방지:</p>
+          <div class="code-header">
+            <span>안전한 추가 템플릿</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code># === 기존 에이전트 (절대 수정 금지!) ===
+existing_agents:
+  - id: "agent1"
+    workspace: "/Users/sanghyeon/clawd"  # 이 경로 유지!
+  - id: "agent2"
+    workspace: "~/.openclaw/workspace-agent2"  # 이 경로 유지!
+
+# === 새로 추가할 에이전트 ===
+new_agent:
+  id: "agent3"
+  name: "새 에이전트"
+  workspace: "~/.openclaw/workspace-agent3"
+  telegram_token: "토큰"
+  model: "google/gemini-2.0-flash"
+
+# 기존 에이전트의 workspace 경로를 절대 변경하지 말고,
+# 새 에이전트만 추가해줘.</code></pre>
+        </div>
+
+        <div class="step">
+          <h4>4단계: 변경 후 검증</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code># Config 확인
+cat ~/.openclaw/openclaw.json | grep -A10 '"list"'
+
+# 기존 경로가 바뀌었으면 백업에서 복구
+cp ~/.openclaw/openclaw.json.bak ~/.openclaw/openclaw.json</code></pre>
+        </div>
+      </div>
+
+      <h3>메모리 손실 시 복구 방법</h3>
+
+      <div class="alert alert-info">
+        <div class="alert-title">[i] Workspace 폴더는 보통 그대로 있음</div>
+        <p>Config의 경로만 바뀐 거라면, 실제 파일은 원래 위치에 있습니다. 경로만 다시 맞춰주면 복구됩니다.</p>
+      </div>
+
+      <div class="code-header">
+        <span>복구 절차</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># 1. 원래 workspace 폴더 확인
+ls -la /Users/sanghyeon/clawd/  # 파일 있는지 확인
+ls -la ~/.openclaw/workspace-*/  # 다른 workspace들
+
+# 2. Config에서 잘못된 경로 찾기
+cat ~/.openclaw/openclaw.json | grep workspace
+
+# 3. 올바른 경로로 수정 (직접 편집 또는 에이전트에게 요청)
+# "belphegor의 workspace를 /Users/sanghyeon/clawd로 수정해줘"
+
+# 4. Gateway 재시작
+openclaw gateway restart</code></pre>
 
       <h3>Config 변경 예시</h3>
 
