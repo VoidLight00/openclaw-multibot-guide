@@ -100,49 +100,195 @@
         </div>
       </div>
 
-      <h2>[SETUP] Google OAuth 설정 (실전)</h2>
+      <h2>[SETUP] openclaw configure 완전 가이드</h2>
       
-      <div class="alert alert-warning">
-        <div class="alert-title">[!] 주의: CLI 명령어 차이</div>
-        <p><code>openclaw auth add google</code> 같은 명령어는 존재하지 않습니다. 
-        버전에 따라 명령어가 다르니 아래 방법을 따르세요.</p>
+      <p><code>openclaw configure</code>는 AI 모델과 채널을 설정하는 대화형 마법사입니다.</p>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>openclaw configure</code></pre>
+
+      <h3>Step 1: Gateway 위치 선택</h3>
+      
+      <div class="code-header">
+        <span>프롬프트</span>
+      </div>
+      <pre><code>"Where will the Gateway run?"
+→ Local (this machine)  [Enter]</code></pre>
+
+      <h3>Step 2: 섹션 선택</h3>
+      
+      <div class="card">
+        <p>화살표 키(↓)와 스페이스바로 선택:</p>
+        <ol>
+          <li><strong>Model</strong> 이동 → 스페이스바 (체크)</li>
+          <li><strong>Channels</strong> 이동 → 스페이스바 (체크)</li>
+          <li><strong>Continue</strong> 이동 → Enter</li>
+        </ol>
       </div>
 
-      <h3>방법 1: openclaw configure (권장)</h3>
+      <h3>Step 3: Model Provider 선택</h3>
       
-      <p>가장 확실한 방법입니다. 대화형 마법사가 안내합니다.</p>
+      <p>사용할 AI 모델 제공자를 선택합니다.</p>
+
+      <h2>[CLAUDE] Anthropic (Claude) OAuth 설정</h2>
       
       <div class="steps">
         <div class="step">
-          <h4>configure 실행</h4>
+          <h4>Anthropic 선택</h4>
           <div class="code-header">
-            <span>Terminal</span>
-            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+            <span>프롬프트</span>
           </div>
-          <pre><code>openclaw configure</code></pre>
-          <p>또는</p>
+          <pre><code>"Select model providers"
+→ Anthropic (Claude)  [스페이스바로 선택]
+→ Continue  [Enter]</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>인증 방식 선택</h4>
           <div class="code-header">
-            <span>Terminal</span>
-            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+            <span>프롬프트</span>
           </div>
-          <pre><code>openclaw setup</code></pre>
+          <pre><code>"Anthropic authentication"
+→ OAuth (browser login)  [권장]
+   또는
+→ API Key (manual entry)</code></pre>
         </div>
         
         <div class="step">
-          <h4>Google 선택</h4>
-          <p>프롬프트에서 Google/Gemini 관련 옵션 선택</p>
+          <h4>OAuth 선택 시: 브라우저 인증</h4>
+          <p>자동으로 브라우저가 열립니다.</p>
+          <ol>
+            <li>Anthropic 계정으로 로그인</li>
+            <li>"OpenClaw" 앱 권한 승인</li>
+            <li>터미널로 돌아오면 완료</li>
+          </ol>
         </div>
         
         <div class="step">
-          <h4>브라우저 자동 열림</h4>
-          <p>Google 계정 선택 → "OpenClaw" 앱 권한 승인</p>
-        </div>
-        
-        <div class="step">
-          <h4>완료 확인</h4>
-          <p>터미널에 성공 메시지 표시. Gateway 재시작 필요할 수 있음.</p>
+          <h4>API Key 선택 시: 키 입력</h4>
+          <div class="code-header">
+            <span>프롬프트</span>
+          </div>
+          <pre><code>"Enter Anthropic API Key"
+→ sk-ant-api03-xxxxxxxxxxxxx  [붙여넣기]</code></pre>
+          <p>API 키: <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a></p>
         </div>
       </div>
+
+      <div class="alert alert-warning">
+        <div class="alert-title">[!] Claude 구독 사용 경고</div>
+        <p>Claude Pro/Max 구독 계정을 OAuth로 연동하면 <strong>계정 정지 위험</strong>이 있습니다.
+        자동화 툴 사용이 이용약관에 위반될 수 있습니다. <strong>API Key 방식 권장.</strong></p>
+      </div>
+
+      <h2>[GOOGLE] Google (Gemini) OAuth 설정</h2>
+      
+      <div class="steps">
+        <div class="step">
+          <h4>Google 선택</h4>
+          <div class="code-header">
+            <span>프롬프트</span>
+          </div>
+          <pre><code>"Select model providers"
+→ Google (Gemini)  [스페이스바로 선택]
+→ Continue  [Enter]</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>인증 방식 선택</h4>
+          <div class="code-header">
+            <span>프롬프트</span>
+          </div>
+          <pre><code>"Google authentication"
+→ OAuth (browser login)  [권장]
+   또는
+→ API Key (Google AI Studio)</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>OAuth 선택 시: 브라우저 인증</h4>
+          <ol>
+            <li>Google 계정 선택</li>
+            <li>"OpenClaw" 앱 권한 승인</li>
+            <li>"계속" 클릭</li>
+            <li>터미널로 돌아오면 완료</li>
+          </ol>
+        </div>
+        
+        <div class="step">
+          <h4>API Key 선택 시: 키 입력</h4>
+          <div class="code-header">
+            <span>프롬프트</span>
+          </div>
+          <pre><code>"Enter Google AI API Key"
+→ AIzaSyxxxxxxxxxxxxxxxxx  [붙여넣기]</code></pre>
+          <p>무료 API 키: <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></p>
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        <div class="alert-title">[i] Gemini 무료 티어</div>
+        <p>Google AI Studio의 Gemini Flash는 분당 요청 제한이 있지만 <strong>무료</strong>로 사용 가능합니다.</p>
+      </div>
+
+      <h2>[GPT] OpenAI (GPT) 설정</h2>
+      
+      <p>OpenAI는 <strong>API Key 방식만</strong> 지원합니다. (OAuth 없음)</p>
+      
+      <div class="steps">
+        <div class="step">
+          <h4>OpenAI 선택</h4>
+          <div class="code-header">
+            <span>프롬프트</span>
+          </div>
+          <pre><code>"Select model providers"
+→ OpenAI (GPT)  [스페이스바로 선택]
+→ Continue  [Enter]</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>API Key 입력</h4>
+          <div class="code-header">
+            <span>프롬프트</span>
+          </div>
+          <pre><code>"Enter OpenAI API Key"
+→ sk-proj-xxxxxxxxxxxxx  [붙여넣기]</code></pre>
+          <p>API 키: <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a></p>
+        </div>
+      </div>
+
+      <h2>[MULTI] 여러 Provider 동시 설정</h2>
+      
+      <p>한 번에 여러 Provider를 선택할 수 있습니다.</p>
+      
+      <div class="code-header">
+        <span>예시: Claude + Gemini 동시 설정</span>
+      </div>
+      <pre><code>"Select model providers"
+→ [x] Anthropic (Claude)   [스페이스바]
+→ [x] Google (Gemini)      [스페이스바]  
+→ [ ] OpenAI (GPT)
+→ Continue  [Enter]
+
+# 이후 각 Provider별로 인증 진행</code></pre>
+
+      <h2>[AFTER] 설정 완료 후</h2>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># Gateway 재시작
+openclaw gateway restart
+
+# 상태 확인
+openclaw status
+
+# 설정된 모델 확인
+openclaw models list</code></pre>
 
       <h3>방법 2: 웹 UI Dashboard</h3>
       
