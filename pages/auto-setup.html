@@ -126,7 +126,7 @@ user_timezone: "Asia/Seoul"
 agents:
   - id: "belphegor"
     name: "벨페고르"
-    workspace: "/Users/sanghyeon/clawd"
+    workspace: "/Users/username/clawd"
     telegram_token: "8463609797:AAH6QX7..."
     model: "anthropic/claude-sonnet-4"
     personality: "나태의 악마, 편하고 직설적"
@@ -271,7 +271,7 @@ cat ~/.openclaw/openclaw.json | grep -A5 '"list"'  # 기존 경로 확인</code>
           <div class="code-header">
             <span>예시</span>
           </div>
-          <pre><code>agent1: /Users/sanghyeon/clawd          (절대경로)
+          <pre><code>agent1: /Users/username/clawd          (절대경로)
 agent2: ~/.openclaw/workspace-agent2    (틸드경로)</code></pre>
         </div>
 
@@ -285,7 +285,7 @@ agent2: ~/.openclaw/workspace-agent2    (틸드경로)</code></pre>
           <pre><code># === 기존 에이전트 (절대 수정 금지!) ===
 existing_agents:
   - id: "agent1"
-    workspace: "/Users/sanghyeon/clawd"  # 이 경로 유지!
+    workspace: "/Users/username/clawd"  # 이 경로 유지!
   - id: "agent2"
     workspace: "~/.openclaw/workspace-agent2"  # 이 경로 유지!
 
@@ -327,14 +327,14 @@ cp ~/.openclaw/openclaw.json.bak ~/.openclaw/openclaw.json</code></pre>
         <button class="copy-btn" onclick="copyCode(this)">복사</button>
       </div>
       <pre><code># 1. 원래 workspace 폴더 확인
-ls -la /Users/sanghyeon/clawd/  # 파일 있는지 확인
+ls -la /Users/username/clawd/  # 파일 있는지 확인
 ls -la ~/.openclaw/workspace-*/  # 다른 workspace들
 
 # 2. Config에서 잘못된 경로 찾기
 cat ~/.openclaw/openclaw.json | grep workspace
 
 # 3. 올바른 경로로 수정 (직접 편집 또는 에이전트에게 요청)
-# "belphegor의 workspace를 /Users/sanghyeon/clawd로 수정해줘"
+# "belphegor의 workspace를 /Users/username/clawd로 수정해줘"
 
 # 4. Gateway 재시작
 openclaw gateway restart</code></pre>

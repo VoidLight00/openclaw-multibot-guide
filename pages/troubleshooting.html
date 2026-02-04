@@ -221,6 +221,145 @@ openclaw gateway restart</code></pre>
 openclaw dashboard</code></pre>
       </div>
 
+      <h2>[X] 429 Rate Limit / 쿼터 문제</h2>
+
+      <h3>"You have exhausted your capacity" 에러</h3>
+      
+      <div class="card">
+        <h4>증상</h4>
+        <pre><code>Cloud Code Assist API error (429): You have exhausted your capacity 
+on this model. Your quota will reset after 19h24m19s.</code></pre>
+        
+        <h4>원인</h4>
+        <ul>
+          <li>여러 봇이 같은 Google 계정의 쿼터를 공유</li>
+          <li>일반 Gemini API (<code>google-gemini-cli</code>)의 제한적 쿼터 사용 중</li>
+          <li>Google One 구독과 API 쿼터는 별개</li>
+        </ul>
+        
+        <h4>핵심 해결책: google-antigravity Provider 사용</h4>
+        <p><code>google-antigravity</code>는 Cloud Code Assist API를 사용하며, 
+        일반 Gemini API보다 <strong>훨씬 관대한 쿼터</strong>를 제공합니다.</p>
+        
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code># 1. Antigravity 플러그인 활성화
+openclaw plugins enable google-antigravity-auth
+
+# 2. Antigravity OAuth 인증 (브라우저 열림)
+openclaw models auth login --provider google-antigravity
+
+# 3. 에이전트 모델 변경 (openclaw.json)
+# "google-gemini-cli/..." → "google-antigravity/..."
+{
+  "agents": {
+    "list": [
+      {
+        "id": "mybot",
+        "model": {
+          "primary": "google-antigravity/gemini-3-pro-high"
+        }
+      }
+    ]
+  }
+}
+
+# 4. Gateway 재시작
+openclaw gateway restart</code></pre>
+      </div>
+
+      <h3>멀티봇 쿼터 분산 전략</h3>
+      
+      <div class="card">
+        <h4>문제</h4>
+        <p>여러 봇이 같은 Google 계정을 사용하면 쿼터를 공유하여 빠르게 소진됩니다.</p>
+        
+        <h4>해결: 에이전트별 계정 분리</h4>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>에이전트</th>
+              <th>모델</th>
+              <th>OAuth 계정</th>
+              <th>쿼터 풀</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>belphegor</td>
+              <td>anthropic/claude-opus-4-5</td>
+              <td>Anthropic</td>
+              <td>🔵 Claude</td>
+            </tr>
+            <tr>
+              <td>mammon</td>
+              <td>google-antigravity/gemini-3-pro-high</td>
+              <td>account1@gmail.com</td>
+              <td>🟢 Cloud Code #1</td>
+            </tr>
+            <tr>
+              <td>danana</td>
+              <td>google-antigravity/gemini-3-pro-high</td>
+              <td>account2@gmail.com</td>
+              <td>🟡 Cloud Code #2</td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <h4>Auth Order 설정 (계정 고정)</h4>
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code># 특정 에이전트가 특정 계정만 사용하도록 고정
+openclaw models auth order set \
+  --agent danana \
+  --provider google-antigravity \
+  "google-antigravity:account2@gmail.com"
+
+# 설정 확인
+openclaw models auth order get --agent danana --provider google-antigravity</code></pre>
+      </div>
+
+      <h3>Provider 비교: gemini-cli vs antigravity</h3>
+      
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>API 백엔드</th>
+              <th>쿼터</th>
+              <th>추천</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>google-gemini-cli</code></td>
+              <td>일반 Gemini API</td>
+              <td>제한적 (소비자용)</td>
+              <td>단일 봇, 가벼운 사용</td>
+            </tr>
+            <tr>
+              <td><code>google-antigravity</code></td>
+              <td>Cloud Code Assist</td>
+              <td>관대함 (개발자 도구용)</td>
+              <td><strong>멀티봇, 고빈도 사용</strong></td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <div class="alert alert-info">
+          <div class="alert-title">[i] 중요</div>
+          <p>Google One/AI Premium 구독과 Cloud Code Assist 접근은 <strong>별개</strong>입니다.
+          구독 여부와 관계없이 <code>google-antigravity</code> provider를 사용하면 
+          별도의 (더 관대한) 쿼터 풀을 사용하게 됩니다.</p>
+        </div>
+      </div>
+
       <h2>[X] 텔레그램 연결 문제</h2>
 
       <h3>봇이 응답하지 않음</h3>
@@ -309,7 +448,7 @@ openclaw logs --tail 200</code></pre>
         
         <h4>원인</h4>
         <p><strong>Config 수정 중 기존 에이전트의 workspace 경로가 변경됨</strong></p>
-        <p>예: <code>/Users/sanghyeon/clawd</code> → <code>~/.openclaw/workspace-belphegor</code></p>
+        <p>예: <code>/Users/username/clawd</code> → <code>~/.openclaw/workspace-belphegor</code></p>
         <p>경로가 바뀌면 에이전트가 원래 메모리 파일을 찾을 수 없음</p>
         
         <h4>진단</h4>
@@ -335,7 +474,7 @@ cp ~/.openclaw/openclaw.json.bak ~/.openclaw/openclaw.json
 # 2. 없으면 직접 수정 - workspace 경로를 원래대로
 # openclaw dashboard에서 Raw 모드로 편집
 # 또는 에이전트에게 요청:
-# "belphegor의 workspace를 /Users/sanghyeon/clawd로 수정해줘"
+# "belphegor의 workspace를 /Users/username/clawd로 수정해줘"
 
 # 3. Gateway 재시작
 openclaw gateway restart</code></pre>
@@ -365,7 +504,7 @@ cat ~/.openclaw/openclaw.json | grep -B1 -A1 workspace</code></pre>
           <span>에이전트에게 보내는 메시지</span>
         </div>
         <pre><code># 기존 에이전트 (경로 유지!)
-# - belphegor: /Users/sanghyeon/clawd
+# - belphegor: /Users/username/clawd
 # - mammon: ~/.openclaw/workspace-mammon
 
 # 새로 추가할 에이전트

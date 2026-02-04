@@ -203,7 +203,7 @@ openclaw status
 agents:
   - id: "belphegor"
     name: "벨페고르"
-    workspace: "/Users/sanghyeon/clawd"
+    workspace: "/Users/username/clawd"
     telegram_token: "123456:ABC..."
     model: "anthropic/claude-sonnet-4"
     

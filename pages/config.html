@@ -319,6 +319,106 @@ match 조건 확인
         </tbody>
       </table>
 
+      <h3>5. Auth Order - 에이전트별 계정 고정</h3>
+      
+      <p>여러 Google 계정으로 쿼터를 분산할 때, 에이전트마다 사용할 계정을 고정합니다.</p>
+      
+      <div class="alert alert-info">
+        <div class="alert-title">[i] 언제 필요한가?</div>
+        <p>멀티봇을 운영하면서 429 쿼터 에러가 발생할 때, 
+        각 봇이 다른 Google 계정의 쿼터를 사용하도록 분리할 수 있습니다.</p>
+      </div>
+      
+      <div class="code-header">
+        <span>Terminal - Auth Order 명령어</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># 현재 설정 확인
+openclaw models auth order get --agent 에이전트명 --provider google-antigravity
+
+# 특정 계정으로 고정
+openclaw models auth order set \
+  --agent danana \
+  --provider google-antigravity \
+  "google-antigravity:myemail@gmail.com"
+
+# 설정 해제 (라운드로빈으로 복귀)
+openclaw models auth order clear --agent 에이전트명 --provider google-antigravity</code></pre>
+
+      <h4>설정 흐름</h4>
+      
+      <div class="steps">
+        <div class="step">
+          <h4>1. 여러 계정 인증</h4>
+          <pre><code># 첫 번째 계정
+openclaw models auth login --provider google-antigravity
+# → account1@gmail.com으로 로그인
+
+# 두 번째 계정
+openclaw models auth login --provider google-antigravity
+# → account2@gmail.com으로 로그인</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>2. 에이전트별 계정 매핑</h4>
+          <pre><code># mammon은 account1 사용
+openclaw models auth order set \
+  --agent mammon \
+  --provider google-antigravity \
+  "google-antigravity:account1@gmail.com"
+
+# danana는 account2 사용
+openclaw models auth order set \
+  --agent danana \
+  --provider google-antigravity \
+  "google-antigravity:account2@gmail.com"</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>3. Gateway 재시작</h4>
+          <pre><code>openclaw gateway restart</code></pre>
+        </div>
+      </div>
+
+      <h4>쿼터 분산 예시</h4>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>에이전트</th>
+            <th>모델</th>
+            <th>OAuth 계정</th>
+            <th>쿼터 풀</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>belphegor</td>
+            <td>anthropic/claude-opus-4-5</td>
+            <td>Anthropic</td>
+            <td>🔵 Claude</td>
+          </tr>
+          <tr>
+            <td>mammon</td>
+            <td>google-antigravity/gemini-3-pro-high</td>
+            <td>account1@gmail.com</td>
+            <td>🟢 Cloud Code #1</td>
+          </tr>
+          <tr>
+            <td>asmodeus</td>
+            <td>google-antigravity/gemini-3-pro-high</td>
+            <td>account1@gmail.com</td>
+            <td>🟢 Cloud Code #1</td>
+          </tr>
+          <tr>
+            <td>danana</td>
+            <td>google-antigravity/gemini-3-pro-high</td>
+            <td>account2@gmail.com</td>
+            <td>🟡 Cloud Code #2</td>
+          </tr>
+        </tbody>
+      </table>
+
       <h2>[NOTE] 전체 Config 예시</h2>
       
       <p>3개 에이전트 (Claude + Gemini x2) 완전한 config 예시입니다.</p>
