@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>병렬 실행 원리 - OpenClaw 멀티봇 가이드</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        [CLAW] OpenClaw <span>Guide</span>
+      </a>
+      
+      <nav>
+        <ul class="sidebar-nav">
+          <li><a href="../index.html">시작하기</a></li>
+        </ul>
+        
+        <div class="sidebar-section">가이드</div>
+        <ul class="sidebar-nav">
+          <li><a href="intro.html">1. 개요</a></li>
+          <li><a href="setup.html">2. 사전 준비</a></li>
+          <li><a href="models.html">3. AI 모델 설정</a></li>
+          <li><a href="workspace.html">4. Workspace 구조</a></li>
+          <li><a href="config.html">5. Config 설정</a></li>
+          <li><a href="run.html">6. 실행 & 테스트</a></li>
+        </ul>
+        
+        <div class="sidebar-section">플랫폼</div>
+        <ul class="sidebar-nav">
+          <li><a href="mac-server.html">Mac Mini 서버</a></li>
+          <li><a href="windows.html">Windows (WSL2)</a></li>
+        </ul>
+        
+        <div class="sidebar-section">심화</div>
+        <ul class="sidebar-nav">
+          <li><a href="architecture.html" class="active">병렬 실행 원리</a></li>
+        </ul>
+        
+        <div class="sidebar-section">실전</div>
+        <ul class="sidebar-nav">
+          <li><a href="examples.html">활용 예시</a></li>
+          <li><a href="auto-setup.html">자동 설정 템플릿</a></li>
+          <li><a href="troubleshooting.html">트러블슈팅</a></li>
+        </ul>
+        
+        <div class="sidebar-section">참고</div>
+        <ul class="sidebar-nav">
+          <li><a href="https://docs.openclaw.ai" target="_blank">공식 문서 ↗</a></li>
+          <li><a href="https://github.com/openclaw/openclaw" target="_blank">GitHub ↗</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <h1>병렬 실행 원리</h1>
+      <p class="lead">
+        하나의 Gateway 프로세스가 어떻게 여러 텔레그램 봇을 동시에 처리하는지,
+        내부 아키텍처와 설정 방법을 깊이 알아봅니다.
+      </p>
+
+      <div class="hero-badges" style="justify-content: flex-start; margin-bottom: 2rem;">
+        <span class="badge badge-info">Deep Dive</span>
+        <span class="badge">Node.js</span>
+        <span class="badge">Event Loop</span>
+        <span class="badge">Long Polling</span>
+      </div>
+
+      <!-- ============================== -->
+      <!-- Section 1: 핵심 원리 -->
+      <!-- ============================== -->
+      <h2>[ENGINE] 핵심 원리: 단일 프로세스, 다중 봇</h2>
+      
+      <p>
+        OpenClaw는 <strong>하나의 Node.js 프로세스</strong>로 여러 텔레그램 봇을 동시에 운영합니다.
+        별도의 프로세스나 스레드를 생성하지 않고도 가능한 이유는 
+        Node.js의 <strong>비동기 이벤트 루프</strong> 덕분입니다.
+      </p>
+
+      <div class="code-header">
+        <span>병렬 실행 아키텍처</span>
+      </div>
+      <pre><code>┌───────────────────────────────────────────────────────┐
+│              openclaw-gateway (단일 프로세스)            │
+│                Node.js Event Loop                      │
+│                    Port 18789                          │
+│                                                       │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐ │
+│  │ Bot #1   │  │ Bot #2   │  │ Bot #3   │  │ Bot #N │ │
+│  │ Token A  │  │ Token B  │  │ Token C  │  │ Token N│ │
+│  │Long-Poll │  │Long-Poll │  │Long-Poll │  │Long-   │ │
+│  │          │  │          │  │          │  │Poll    │ │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └───┬────┘ │
+│       │             │             │             │      │
+│       ▼             ▼             ▼             ▼      │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │            bindings 라우팅 테이블                  │   │
+│  └─────────────────────────────────────────────────┘   │
+│       │             │             │             │      │
+│       ▼             ▼             ▼             ▼      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐ │
+│  │ Agent A  │  │ Agent B  │  │ Agent C  │  │Agent N │ │
+│  │ Claude   │  │ Gemini   │  │  GPT     │  │ Any    │ │
+│  └──────────┘  └──────────┘  └──────────┘  └────────┘ │
+└───────────────────────────────────────────────────────┘</code></pre>
+
+      <h3>왜 하나의 프로세스로 충분한가?</h3>
+      
+      <div class="card-grid">
+        <div class="card">
+          <h4>[ASYNC] 비동기 I/O</h4>
+          <p>텔레그램 Long Polling은 네트워크 I/O입니다. Node.js는 I/O 대기 중 
+          다른 작업을 처리할 수 있어 CPU를 낭비하지 않습니다.</p>
+        </div>
+        <div class="card">
+          <h4>[LOOP] 이벤트 루프</h4>
+          <p>각 봇의 폴링 요청이 이벤트 큐에 등록됩니다. 메시지가 도착하면 
+          콜백이 실행되어 해당 에이전트로 전달됩니다.</p>
+        </div>
+        <div class="card">
+          <h4>[TOKEN] 독립적 연결</h4>
+          <p>각 봇 토큰은 텔레그램 Bot API와 <strong>별도의 HTTP 연결</strong>을 유지합니다. 
+          하나의 봇이 바쁘더라도 다른 봇에 영향을 주지 않습니다.</p>
+        </div>
+        <div class="card">
+          <h4>[MEM] 낮은 리소스</h4>
+          <p>프로세스 하나로 동작하므로 메모리 사용량이 적습니다. 
+          봇 4개를 운영해도 약 50~80MB 수준입니다.</p>
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        <div class="alert-title">[i] Long Polling vs Webhook</div>
+        <p>OpenClaw은 기본적으로 <strong>Long Polling</strong> 방식을 사용합니다. 
+        Gateway가 텔레그램 서버에 "새 메시지 있어?" 하고 계속 물어보는 방식입니다. 
+        별도의 공인 IP나 SSL 인증서가 필요 없어 로컬 환경(Mac Mini, NAS 등)에 적합합니다.</p>
+      </div>
+
+      <!-- ============================== -->
+      <!-- Section 2: 메시지 라우팅 -->
+      <!-- ============================== -->
+      <h2>[ROUTE] 메시지 라우팅 상세</h2>
+      
+      <p>
+        여러 봇이 동시에 메시지를 수신할 때, Gateway는 <code>bindings</code> 설정을 기반으로 
+        각 메시지를 올바른 에이전트에게 전달합니다.
+      </p>
+
+      <h3>라우팅 흐름</h3>
+      
+      <div class="code-header">
+        <span>메시지 라우팅 과정</span>
+      </div>
+      <pre><code>사용자 A → @MyBot1 에 메시지 전송
+사용자 B → @MyBot2 에 메시지 전송     (동시에 발생 가능)
+사용자 C → @MyBot3 에 메시지 전송
+
+        ┌────────────────────────────────────┐
+        │           Gateway 수신              │
+        │  Bot1 Token → accountId: "bot1"    │
+        │  Bot2 Token → accountId: "bot2"    │
+        │  Bot3 Token → accountId: "bot3"    │
+        └─────────────┬──────────────────────┘
+                      │
+                      ▼
+        ┌────────────────────────────────────┐
+        │       bindings 매칭 엔진            │
+        │                                    │
+        │  for each binding:                 │
+        │    if msg.channel == match.channel  │
+        │    && msg.accountId == match.accountId │
+        │    → route to binding.agentId      │
+        └─────────────┬──────────────────────┘
+                      │
+          ┌───────────┼───────────┐
+          ▼           ▼           ▼
+     Agent "alpha"  Agent "beta"  Agent "gamma"
+     (Claude Opus)  (Gemini Pro)  (GPT-4)</code></pre>
+
+      <h3>Binding 구조 이해</h3>
+      
+      <p>각 binding은 <strong>match 조건</strong>과 <strong>목적지 agentId</strong>로 구성됩니다.</p>
+      
+      <div class="code-header">
+        <span>binding 예시</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>{
+  "bindings": [
+    {
+      "agentId": "alpha",           // → 이 에이전트로 전달
+      "match": {
+        "channel": "telegram",      // 텔레그램 채널에서 온 메시지 중
+        "accountId": "bot1"         // "bot1" 계정으로 들어온 것만
+      }
+    },
+    {
+      "agentId": "beta",
+      "match": {
+        "channel": "telegram",
+        "accountId": "bot2"
+      }
+    }
+  ]
+}</code></pre>
+
+      <table>
+        <thead>
+          <tr>
+            <th>필드</th>
+            <th>역할</th>
+            <th>매칭 대상</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>agentId</code></td>
+            <td>메시지를 처리할 에이전트</td>
+            <td><code>agents.list[].id</code> 와 일치</td>
+          </tr>
+          <tr>
+            <td><code>match.channel</code></td>
+            <td>메시징 채널 종류</td>
+            <td><code>"telegram"</code>, <code>"discord"</code> 등</td>
+          </tr>
+          <tr>
+            <td><code>match.accountId</code></td>
+            <td>채널 내 계정 식별자</td>
+            <td><code>channels.telegram.accounts</code> 의 키</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-warning">
+        <div class="alert-title">[!] 매칭 규칙</div>
+        <p><code>accountId</code>는 <code>channels.telegram.accounts</code>에 정의한 키 이름과 
+        <strong>정확히 일치</strong>해야 합니다. 대소문자를 구분하므로 주의하세요.</p>
+      </div>
+
+      <!-- ============================== -->
+      <!-- Section 3: 동시 처리 설정 -->
+      <!-- ============================== -->
+      <h2>[GEAR] 동시 처리 설정</h2>
+      
+      <p>
+        봇이 동시에 여러 메시지를 받을 수 있습니다. 
+        <code>maxConcurrent</code> 설정으로 에이전트당 동시 처리 수를 제어합니다.
+      </p>
+
+      <div class="code-header">
+        <span>동시 처리 설정</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code>{
+  "agents": {
+    "defaults": {
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    }
+  }
+}</code></pre>
+
+      <table>
+        <thead>
+          <tr>
+            <th>설정</th>
+            <th>기본값</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>maxConcurrent</code></td>
+            <td>4</td>
+            <td>에이전트 하나가 동시에 처리할 수 있는 대화 수</td>
+          </tr>
+          <tr>
+            <td><code>subagents.maxConcurrent</code></td>
+            <td>8</td>
+            <td>에이전트의 도구 호출(MCP, Skills) 동시 실행 수</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>설정 가이드라인</h3>
+      
+      <div class="card-grid">
+        <div class="card">
+          <h4>[LOW] 저사양 환경</h4>
+          <p>Mac Mini (8GB RAM) 또는 NAS</p>
+          <div class="code-header">
+            <span>권장 설정</span>
+          </div>
+          <pre><code>"maxConcurrent": 2,
+"subagents": { "maxConcurrent": 4 }</code></pre>
+        </div>
+        <div class="card">
+          <h4>[MID] 일반 환경</h4>
+          <p>Mac Mini (16GB+) 또는 일반 서버</p>
+          <div class="code-header">
+            <span>권장 설정</span>
+          </div>
+          <pre><code>"maxConcurrent": 4,
+"subagents": { "maxConcurrent": 8 }</code></pre>
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        <div class="alert-title">[i] 비용 주의</div>
+        <p><code>maxConcurrent</code>를 높이면 동시에 여러 AI API 호출이 발생합니다. 
+        API 비용과 쿼터 제한을 고려하여 적절히 설정하세요. 
+        특히 Claude Opus 같은 고비용 모델은 낮게 설정하는 것을 권장합니다.</p>
+      </div>
+
+      <!-- ============================== -->
+      <!-- Section 4: macOS 자동 시작 -->
+      <!-- ============================== -->
+      <h2>[AUTO] 자동 시작 설정 (macOS)</h2>
+      
+      <p>
+        Mac Mini를 서버로 사용하는 경우, <code>LaunchAgents</code>를 설정하면 
+        재부팅 시 Gateway가 자동으로 시작됩니다.
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <h4>plist 파일 생성</h4>
+          <p>아래 내용으로 LaunchAgent를 생성합니다.</p>
+          <div class="code-header">
+            <span>~/Library/LaunchAgents/ai.openclaw.gateway.plist</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+  &lt;key&gt;Label&lt;/key&gt;
+  &lt;string&gt;ai.openclaw.gateway&lt;/string&gt;
+
+  &lt;key&gt;ProgramArguments&lt;/key&gt;
+  &lt;array&gt;
+    &lt;string&gt;/usr/local/bin/openclaw&lt;/string&gt;
+    &lt;string&gt;gateway&lt;/string&gt;
+    &lt;string&gt;start&lt;/string&gt;
+  &lt;/array&gt;
+
+  &lt;key&gt;RunAtLoad&lt;/key&gt;
+  &lt;true/&gt;
+
+  &lt;key&gt;KeepAlive&lt;/key&gt;
+  &lt;true/&gt;
+
+  &lt;key&gt;StandardOutPath&lt;/key&gt;
+  &lt;string&gt;/Users/YOUR_USERNAME/.openclaw/logs/gateway.log&lt;/string&gt;
+
+  &lt;key&gt;StandardErrorPath&lt;/key&gt;
+  &lt;string&gt;/Users/YOUR_USERNAME/.openclaw/logs/gateway.err.log&lt;/string&gt;
+
+  &lt;key&gt;EnvironmentVariables&lt;/key&gt;
+  &lt;dict&gt;
+    &lt;key&gt;PATH&lt;/key&gt;
+    &lt;string&gt;/usr/local/bin:/usr/bin:/bin&lt;/string&gt;
+  &lt;/dict&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;</code></pre>
+        </div>
+
+        <div class="step">
+          <h4>경로 확인</h4>
+          <p><code>ProgramArguments</code>의 openclaw 경로를 확인합니다.</p>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code># openclaw 실행 파일 경로 확인
+which openclaw
+
+# npm global 설치 경로 확인
+npm config get prefix</code></pre>
+          <p>출력된 경로를 plist의 <code>ProgramArguments</code>에 반영하세요.</p>
+        </div>
+        
+        <div class="step">
+          <h4>서비스 등록 및 시작</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code># 로그 디렉토리 생성
+mkdir -p ~/.openclaw/logs
+
+# 서비스 등록
+launchctl load ~/Library/LaunchAgents/ai.openclaw.gateway.plist
+
+# 서비스 시작
+launchctl start ai.openclaw.gateway</code></pre>
+        </div>
+
+        <div class="step">
+          <h4>동작 확인</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code># 서비스 상태 확인
+launchctl list | grep openclaw
+
+# 프로세스 확인
+ps aux | grep openclaw
+
+# 로그 확인
+tail -f ~/.openclaw/logs/gateway.log</code></pre>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>plist 키</th>
+            <th>값</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>RunAtLoad</code></td>
+            <td><code>true</code></td>
+            <td>로그인 시 자동 시작</td>
+          </tr>
+          <tr>
+            <td><code>KeepAlive</code></td>
+            <td><code>true</code></td>
+            <td>크래시 시 자동 재시작</td>
+          </tr>
+          <tr>
+            <td><code>StandardOutPath</code></td>
+            <td>로그 경로</td>
+            <td>표준 출력 로그 파일</td>
+          </tr>
+          <tr>
+            <td><code>StandardErrorPath</code></td>
+            <td>에러 로그 경로</td>
+            <td>에러 출력 로그 파일</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ============================== -->
+      <!-- Section 5: Linux 자동 시작 -->
+      <!-- ============================== -->
+      <h2>[AUTO] 자동 시작 설정 (Linux / WSL2)</h2>
+      
+      <p>Linux 서버나 WSL2 환경에서는 <code>systemd</code>를 사용합니다.</p>
+
+      <div class="steps">
+        <div class="step">
+          <h4>서비스 파일 생성</h4>
+          <div class="code-header">
+            <span>/etc/systemd/system/openclaw-gateway.service</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>[Unit]
+Description=OpenClaw Gateway
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+ExecStart=/usr/local/bin/openclaw gateway start
+Restart=always
+RestartSec=10
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=HOME=/home/YOUR_USERNAME
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>서비스 등록 및 시작</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code># 서비스 등록
+sudo systemctl daemon-reload
+sudo systemctl enable openclaw-gateway
+
+# 서비스 시작
+sudo systemctl start openclaw-gateway
+
+# 상태 확인
+sudo systemctl status openclaw-gateway</code></pre>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- Section 6: 새 봇 추가 -->
+      <!-- ============================== -->
+      <h2>[PLUS] 기존 멀티봇에 새 봇 추가하기</h2>
+      
+      <p>이미 운영 중인 멀티봇 환경에 새로운 봇을 추가하는 방법입니다.</p>
+
+      <div class="steps">
+        <div class="step">
+          <h4>텔레그램 봇 생성</h4>
+          <p>텔레그램에서 <a href="https://t.me/BotFather" target="_blank">@BotFather</a>에게 
+          <code>/newbot</code> 명령을 보내 새 봇을 생성하고, 봇 토큰을 받습니다.</p>
+        </div>
+        
+        <div class="step">
+          <h4>Workspace 생성</h4>
+          <p>새 에이전트의 작업 디렉토리를 만듭니다.</p>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code># 새 에이전트 디렉토리 생성
+mkdir -p ~/my-new-agent
+
+# 필수 파일 생성
+cat &gt; ~/my-new-agent/AGENTS.md &lt;&lt; 'EOF'
+# AGENTS.md
+이 에이전트의 워크스페이스입니다.
+EOF
+
+cat &gt; ~/my-new-agent/SOUL.md &lt;&lt; 'EOF'
+# 성격 정의
+당신은 [역할]입니다. [성격 설명]
+EOF</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>Config에 추가</h4>
+          <p><code>~/.openclaw/openclaw.json</code>에 3곳을 수정합니다.</p>
+          <div class="code-header">
+            <span>1. agents.list 에 추가</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>{
+  "agents": {
+    "list": [
+      // ... 기존 에이전트들 ...
+      {
+        "id": "newagent",
+        "workspace": "/home/username/my-new-agent",
+        "model": {
+          "primary": "google/gemini-2.0-flash"
+        }
+      }
+    ]
+  }
+}</code></pre>
+
+          <div class="code-header">
+            <span>2. channels.telegram.accounts 에 추가</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>{
+  "channels": {
+    "telegram": {
+      "accounts": {
+        // ... 기존 계정들 ...
+        "newbot": {
+          "botToken": "YOUR_NEW_BOT_TOKEN"
+        }
+      }
+    }
+  }
+}</code></pre>
+
+          <div class="code-header">
+            <span>3. bindings 에 추가</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code>{
+  "bindings": [
+    // ... 기존 바인딩들 ...
+    {
+      "agentId": "newagent",
+      "match": {
+        "channel": "telegram",
+        "accountId": "newbot"
+      }
+    }
+  ]
+}</code></pre>
+        </div>
+        
+        <div class="step">
+          <h4>Gateway 재시작</h4>
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">복사</button>
+          </div>
+          <pre><code># Gateway 재시작
+openclaw gateway restart
+
+# 새 봇이 응답하는지 테스트
+# → 텔레그램에서 새 봇에게 메시지를 보내보세요</code></pre>
+        </div>
+      </div>
+
+      <div class="alert alert-warning">
+        <div class="alert-title">[!] 추가 시 체크리스트</div>
+        <p>
+          ☐ <code>agents.list[].id</code> 가 고유한가?<br>
+          ☐ <code>accounts</code> 키와 <code>bindings.match.accountId</code> 가 일치하는가?<br>
+          ☐ <code>bindings.agentId</code> 가 <code>agents.list[].id</code> 와 일치하는가?<br>
+          ☐ 봇 토큰이 다른 기기에서 사용 중이지 않은가?<br>
+          ☐ workspace 디렉토리가 실제로 존재하는가?
+        </p>
+      </div>
+
+      <!-- ============================== -->
+      <!-- Section 7: 상태 확인 -->
+      <!-- ============================== -->
+      <h2>[CHECK] 상태 확인 및 디버깅</h2>
+      
+      <p>멀티봇이 정상적으로 병렬 실행되고 있는지 확인하는 방법입니다.</p>
+
+      <h3>프로세스 확인</h3>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># Gateway 프로세스 확인
+ps aux | grep openclaw
+
+# 포트 사용 확인 (기본 18789)
+lsof -i :18789
+
+# OpenClaw 상태 확인
+openclaw status</code></pre>
+
+      <h3>로그 확인</h3>
+      
+      <div class="code-header">
+        <span>Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">복사</button>
+      </div>
+      <pre><code># 실시간 로그 모니터링
+tail -f ~/.openclaw/logs/gateway.log
+
+# 에러 로그 확인
+tail -50 ~/.openclaw/logs/gateway.err.log
+
+# 특정 에이전트 로그 필터링
+grep "agent:myagent" ~/.openclaw/logs/gateway.log</code></pre>
+
+      <h3>일반적인 문제</h3>
+      
+      <div class="card">
+        <h4>[X] 봇이 응답하지 않음</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>원인</th>
+              <th>해결</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Gateway 미실행</td>
+              <td><code>openclaw gateway start</code></td>
+            </tr>
+            <tr>
+              <td>봇 토큰 오류</td>
+              <td>BotFather에서 토큰 재확인</td>
+            </tr>
+            <tr>
+              <td>Binding 누락</td>
+              <td><code>bindings</code> 배열에 해당 봇 추가</td>
+            </tr>
+            <tr>
+              <td>다른 기기에서 같은 토큰 사용 중</td>
+              <td>다른 기기의 Gateway 중지</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h4>[X] 429 쿼터 에러 (Too Many Requests)</h4>
+        <p>동일 AI 제공자를 여러 에이전트가 사용할 때 쿼터 제한에 걸릴 수 있습니다.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>해결 방법</th>
+              <th>설명</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>maxConcurrent</code> 낮추기</td>
+              <td>동시 요청 수를 줄여 쿼터 분산</td>
+            </tr>
+            <tr>
+              <td>Auth Order 설정</td>
+              <td>에이전트별 다른 OAuth 계정으로 쿼터 분리</td>
+            </tr>
+            <tr>
+              <td>모델 분산</td>
+              <td>에이전트마다 다른 AI 모델 사용</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>자세한 내용: <a href="config.html">5. Config 설정 → Auth Order</a></p>
+      </div>
+
+      <div class="card">
+        <h4>[X] Gateway 시작 실패</h4>
+        <div class="code-header">
+          <span>진단 명령어</span>
+          <button class="copy-btn" onclick="copyCode(this)">복사</button>
+        </div>
+        <pre><code># Config 문법 검사
+cat ~/.openclaw/openclaw.json | python3 -m json.tool
+
+# 자세한 에러 로그 확인
+openclaw gateway start --verbose
+
+# 자동 수복 시도
+openclaw doctor --fix</code></pre>
+      </div>
+
+      <!-- ============================== -->
+      <!-- Section 8: 전체 요약 -->
+      <!-- ============================== -->
+      <h2>[OK] 요약</h2>
+
+      <div class="card">
+        <h4>병렬 실행의 핵심 포인트</h4>
+        <p>✓ <strong>단일 Gateway 프로세스</strong>가 Node.js 이벤트 루프로 모든 봇을 동시 관리</p>
+        <p>✓ 각 봇 토큰은 <strong>독립적인 Long Polling 연결</strong> 유지</p>
+        <p>✓ <code>bindings</code>가 수신 메시지를 <strong>올바른 에이전트</strong>로 라우팅</p>
+        <p>✓ <code>maxConcurrent</code>로 에이전트별 <strong>동시 처리 수</strong> 제어</p>
+        <p>✓ LaunchAgents / systemd로 <strong>자동 시작 및 재시작</strong> 설정 가능</p>
+        <p>✓ 새 봇 추가는 config <strong>3곳</strong>만 수정하면 완료</p>
+      </div>
+
+      <!-- Page Navigation -->
+      <div class="page-nav">
+        <a href="windows.html">
+          <span class="page-nav-label">이전</span>
+          <span class="page-nav-title">← Windows (WSL2)</span>
+        </a>
+        <a href="examples.html" class="page-nav-next">
+          <span class="page-nav-label">다음</span>
+          <span class="page-nav-title">활용 예시 →</span>
+        </a>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>
